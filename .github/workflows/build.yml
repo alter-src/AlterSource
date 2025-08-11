@@ -108,7 +108,7 @@ jobs:
         working-directory: src
         run: ${{ matrix.build_cmd }}
 
-        - name: Clean up Windows build
+      - name: Clean up Windows build
         if: runner.os == 'Windows'
         run: |
             del /q "game\\altersrc\\bin\\x64\\*.pdb" 2>nul
