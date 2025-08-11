@@ -111,7 +111,7 @@ jobs:
       - name: Clean up Windows build
         if: runner.os == 'Windows'
         run: |
-            del /q "game\\altersrc\\bin\\x64\\*.pdb" 2>nul
+            for /r "game" %f in (*.pdb) do del "%f"
         shell: cmd
 
       - name: Save ccache (Linux)
