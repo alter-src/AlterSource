@@ -111,7 +111,7 @@ jobs:
       - name: Clean up Windows build
         if: runner.os == 'Windows'
         run: |
-            for /r "game" %f in (*.pdb) do del "%f"
+            for /r "game" %%f in (*.pdb) do del /q "%%f"
         shell: cmd
 
       - name: Save ccache (Linux)
