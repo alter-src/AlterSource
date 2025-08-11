@@ -1,0 +1,138 @@
+# I'm old!
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2025
+            build_script: createalterprojects.bat
+            build_cmd: msbuild altersrc.sln /p:Configuration=Release /p:Platform=win64 /m
+            artifact_name: alter-windows
+          - os: ubuntu-latest
+            build_script: ./buildalterprojects
+            build_cmd: ""
+            artifact_name: alter-linux
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Python (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y python3
+
+      #-- caching
+      - name: Setup ccache (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+          echo 'export PATH="/usr/lib/ccache:$PATH"' >> $GITHUB_ENV
+
+      - name: ~/.ccache stuff (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          if [ ! -d ~/.ccache ]; then
+            mkdir ~/.ccache
+          fi
+
+      - name: Restore ccache cache (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: Restore Windows build cache
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\AppData\Local\Microsoft\MSBuild
+            C:\Users\runneradmin\AppData\Local\Temp
+          key: ${{ runner.os }}-msvc-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-msvc-
+      #-- end caching
+
+      - name: Install Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y g++-multilib ninja-build lib32z1-dev podman
+
+      - name: Setup MSBuild (Windows only)
+        if: runner.os == 'Windows'
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Generate project files (Windows)
+        run: ${{ matrix.build_script }}
+        shell: cmd
+        working-directory: src
+        if: runner.os == 'Windows'
+
+      - name: Build (Linux)
+        run: ${{ matrix.build_script }}
+        working-directory: src
+        shell: bash
+        if: runner.os == 'Linux'
+
+      - name: Clean and strip (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          find game/altersrc/bin/linux64 -type f -executable -exec strip --strip-all {} +
+          if [ -f game/altersrc_linux64 ]; then
+            strip --strip-all game/altersrc_linux64
+          fi
+        shell: bash
+
+      - name: Build (Windows only)
+        if: runner.os == 'Windows'
+        working-directory: src
+        run: ${{ matrix.build_cmd }}
+
+      - name: Clean up Windows build
+        if: runner.os == 'Windows'
+        run: |
+          del /q "game\\altersrc\\bin\\win64\\*.pdb" 2>nul || echo No PDB files found.
+          del /q "game\\altersrc_win64.exe" 2>nul || echo Executable not found.
+        shell: cmd
+
+      - name: Save ccache (Linux)
+        if: runner.os == 'Linux'
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+
+      - name: Save Windows build cache
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Users\runneradmin\AppData\Local\Microsoft\MSBuild
+            C:\Users\runneradmin\AppData\Local\Temp
+          key: ${{ runner.os }}-msvc-${{ github.sha }}
+
+      - name: Upload Game Folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: game/

@@ -24,6 +24,10 @@ $Group "game"
 	"server"
 	"tier1"
 	"vgui_controls"
+
+	//-- AS
+	"game_shader_generic_example"
+	//-- end AS
 }
 
 $Group "shaders"

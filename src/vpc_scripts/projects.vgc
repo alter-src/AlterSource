@@ -17,6 +17,9 @@ $Project "client"
 {
 	"game\client\client_tf.vpc"			[$TF]
 	"game\client\client_hl2mp.vpc"		[$HL2MP]
+	//-- AS
+	"game\client\client_alter.vpc"		[$ALTER]
+	//-- end AS
 }
 
 $Project "fgdlib"
@@ -28,6 +31,9 @@ $Project "game_shader_generic_example"
 {
 	"materialsystem\stdshaders\game_shader_generic_example_hl2mp.vpc" [$HL2MP]
 	"materialsystem\stdshaders\game_shader_generic_example_tf.vpc" [$TF]
+	//-- AS
+	"materialsystem\stdshaders\game_shader_generic_example_alter.vpc" [$ALTER]
+	//-- end AS
 }
 
 // Use this project if you want to override all std shaders with your own.
@@ -36,6 +42,7 @@ $Project "game_shader_generic_std"
 {
 	"materialsystem\stdshaders\game_shader_generic_std_hl2mp.vpc" [$HL2MP]
 	"materialsystem\stdshaders\game_shader_generic_std_tf.vpc" [$TF]
+	//-- AS: we don't provide an _std, use _example
 }
 
 $Project "glview"
@@ -52,12 +59,18 @@ $Project "server"
 {
 	"game\server\server_tf.vpc"			[$TF]
 	"game\server\server_hl2mp.vpc"		[$HL2MP]
+	//-- AS
+	"game\server\server_alter.vpc"		[$ALTER]
+	//-- end AS
 }
 
 $Project "launcher_main"
 {
 	"launcher_main\launcher_main_mod_hl2mp.vpc" [$HL2MP]
 	"launcher_main\launcher_main_mod_tf.vpc" [$TF]
+	//-- AS
+	"launcher_main\launcher_main_alter.vpc"	[$ALTER]
+	//-- end AS
 }
 
 $Project "mathlib"

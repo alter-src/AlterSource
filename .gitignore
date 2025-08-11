@@ -502,3 +502,28 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+#-- AS
+.vscode/
+altersrc_win64.exe
+altersrc_linux64
+config.cfg
+stats.txt
+videoconfig_linux.cfg
+voice_ban.dt
+glshaders.cfg
+sound_workshop/
+sound.cache
+.ninja*
+mathlib.a
+matsys_controls.a
+raytrace.a
+tier1.a
+vgui_controls.a
+
+mathlib.lib
+tier1.lib
+raytrace.lib
+matsys_controls.lib
+vgui_controls.lib
+#-- end AS
