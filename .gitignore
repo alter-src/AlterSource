@@ -526,4 +526,8 @@ tier1.lib
 raytrace.lib
 matsys_controls.lib
 vgui_controls.lib
+
+graphs/
+settings.scr
+ServerConfig.vdf
 #-- end AS

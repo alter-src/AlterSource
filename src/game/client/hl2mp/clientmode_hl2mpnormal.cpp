@@ -59,6 +59,29 @@ protected:
 		SetPaintBackgroundEnabled( false );
 	}
 
+#ifdef AS_DLL
+	virtual void ReloadScheme( const char *fromFile )
+	{
+		BaseClass::ReloadScheme( fromFile );
+
+		// ThePixelMoon: load the annoying alpha message
+		KeyValuesAD pConditions( "conditions" );
+		g_pClientMode->ComputeVguiResConditions( pConditions );
+
+		LoadControlSettings( "resource/ui/alphamsg.res", NULL, NULL, pConditions );
+
+		vgui::Label *pLabel = dynamic_cast< vgui::Label* >( FindChildByName( "AlphaMsg" ) );
+		if (!pLabel)
+			return;
+		
+		char buf[ MAX_PATH ];
+		Q_snprintf( buf, sizeof(buf),
+			"Alter Source : Open Alpha (Compiled at %s %s)",
+			__DATE__, __TIME__ );
+		pLabel->SetText( buf );
+	}
+#endif
+
 	virtual IViewPortPanel *CreatePanelByName( const char *szPanelName );
 };
 

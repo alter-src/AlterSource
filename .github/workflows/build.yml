@@ -108,11 +108,10 @@ jobs:
         working-directory: src
         run: ${{ matrix.build_cmd }}
 
-      - name: Clean up Windows build
+        - name: Clean up Windows build
         if: runner.os == 'Windows'
         run: |
-          del /q "game\\altersrc\\bin\\win64\\*.pdb" 2>nul || echo No PDB files found.
-          del /q "game\\altersrc_win64.exe" 2>nul || echo Executable not found.
+            del /q "game\\altersrc\\bin\\x64\\*.pdb" 2>nul
         shell: cmd
 
       - name: Save ccache (Linux)
