@@ -22,7 +22,11 @@
 #include <KeyValues.h>
 #include <vgui_controls/AnimationController.h>
 
+#ifdef AS_DLL
+#define MAX_MENU_STRING	1024
+#else
 #define MAX_MENU_STRING	512
+#endif // AS_DLL
 wchar_t g_szMenuString[MAX_MENU_STRING];
 char g_szPrelocalisedMenuString[MAX_MENU_STRING];
 

@@ -530,4 +530,9 @@ vgui_controls.lib
 graphs/
 settings.scr
 ServerConfig.vdf
+
+!src/lib/common/x64/
+!src/lib/common/x64/2015/
+!src/lib/common/x64/2015/release/
+!src/lib/common/x64/2015/release/giflib.lib
 #-- end AS

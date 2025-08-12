@@ -789,6 +789,9 @@ void C_BasePlayer::OnPreDataChanged( DataUpdateType_t updateType )
 {
 	for (int i = 0; i < MAX_AMMO_TYPES; ++i)
 	{
+#ifdef AS_DLL
+		if (GetAmmoCount(i) < m_iOldAmmo[i])
+#endif // AS_DLL
 		m_iOldAmmo[i] = GetAmmoCount(i);
 	}
 
@@ -1030,6 +1033,10 @@ void C_BasePlayer::OnDataChanged( DataUpdateType_t updateType )
 		{
 			if ( GetAmmoCount(i) > m_iOldAmmo[i] )
 			{
+#ifdef AS_DLL
+				int iCount = abs(GetAmmoCount(i) - m_iOldAmmo[i]);
+				m_iOldAmmo[i] = GetAmmoCount(i);
+#endif // AS_DLL
 				// Don't add to ammo pickup if the ammo doesn't do it
 				const FileWeaponInfo_t *pWeaponData = gWR.GetWeaponFromAmmo(i);
 
@@ -1039,7 +1046,11 @@ void C_BasePlayer::OnDataChanged( DataUpdateType_t updateType )
 					CHudHistoryResource *pHudHR = GET_HUDELEMENT( CHudHistoryResource );
 					if( pHudHR )
 					{
+#ifndef AS_DLL
 						pHudHR->AddToHistory( HISTSLOT_AMMO, i, abs(GetAmmoCount(i) - m_iOldAmmo[i]) );
+#else
+						pHudHR->AddToHistory( HISTSLOT_AMMO, i, iCount );
+#endif // AS_DLL
 					}
 				}
 			}
