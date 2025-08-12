@@ -38,7 +38,11 @@ ConVar	footsteps( "mp_footsteps","1", FCVAR_NOTIFY );
 #ifdef CSTRIKE
 ConVar	flashlight( "mp_flashlight","1", FCVAR_NOTIFY );
 #else
+#ifdef AS_DLL
+ConVar	flashlight( "mp_flashlight","1", FCVAR_NOTIFY );
+#else
 ConVar	flashlight( "mp_flashlight","0", FCVAR_NOTIFY );
+#endif // AS_DLL
 #endif
 ConVar	aimcrosshair( "mp_autocrosshair","1", FCVAR_NOTIFY );
 ConVar	decalfrequency( "decalfrequency","10", FCVAR_NOTIFY );

@@ -18,6 +18,9 @@
 #include "hl2mpclientscoreboard.h"
 #include "hl2mptextwindow.h"
 #include "ienginevgui.h"
+#ifdef AS_DLL
+#include <vgui/ILocalize.h>
+#endif // AS_DLL
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -67,20 +70,35 @@ protected:
 		// ThePixelMoon: load the annoying alpha message
 		KeyValuesAD pConditions( "conditions" );
 		g_pClientMode->ComputeVguiResConditions( pConditions );
-
 		LoadControlSettings( "resource/ui/alphamsg.res", NULL, NULL, pConditions );
 
-		vgui::Label *pLabel = dynamic_cast< vgui::Label* >( FindChildByName( "AlphaMsg" ) );
-		if (!pLabel)
+		vgui::Label *pLabel = dynamic_cast<vgui::Label*>( FindChildByName( "AlphaMsg" ) );
+		if ( !pLabel )
 			return;
-		
+
+		const wchar_t *pToken = g_pVGuiLocalize->Find( "#Alter_AlphaText" );
+		if ( !pToken )
+		{
+			// ThePixelMoon: if some bitch decides to not put the token, fallback to English
+			DevWarning( "no token has been provided for alpha message\n" );
+			char buf[ MAX_PATH ];
+			Q_snprintf( buf, sizeof(buf),
+						"Alter Source : Open Alpha (Compiled at %s %s)",
+						__DATE__, __TIME__ );
+			pLabel->SetText( buf );
+			return;
+		}
+
+		char ansiFmt[ MAX_PATH ];
+		g_pVGuiLocalize->ConvertUnicodeToANSI( pToken, ansiFmt, sizeof(ansiFmt) );
+
+		// ThePixelMoon: the __DATE__ and __TIME__ are the only options
 		char buf[ MAX_PATH ];
-		Q_snprintf( buf, sizeof(buf),
-			"Alter Source : Open Alpha (Compiled at %s %s)",
-			__DATE__, __TIME__ );
+		Q_snprintf( buf, sizeof(buf), ansiFmt, __DATE__, __TIME__ );
+
 		pLabel->SetText( buf );
 	}
-#endif
+#endif // AS_DLL
 
 	virtual IViewPortPanel *CreatePanelByName( const char *szPanelName );
 };

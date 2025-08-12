@@ -2257,14 +2257,24 @@ void CGameMovement::FullNoClipMove( float factor, float maxacceleration )
 	Vector forward, right, up;
 	Vector wishdir;
 	float wishspeed;
+#ifdef AS_DLL
+	// ThePixelMoon: quite a hack, but we have to change the speed BEFORE the maxspeed definition in order for it to work
+	if ( mv->m_nButtons & IN_SPEED )
+		factor *= 2.0f;
+
+	if ( mv->m_nButtons & IN_DUCK )
+		factor /= 2.0f;
+#endif // AS_DLL
 	float maxspeed = sv_maxspeed.GetFloat() * factor;
 
 	AngleVectors (mv->m_vecViewAngles, &forward, &right, &up);  // Determine movement angles
 
+#ifndef AS_DLL
 	if ( mv->m_nButtons & IN_SPEED )
 	{
 		factor /= 2.0f;
 	}
+#endif // AS_DLL
 	
 	// Copy movement amounts
 	float fmove = mv->m_flForwardMove * factor;

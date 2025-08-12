@@ -1228,11 +1228,15 @@ extern ConVar flashlight;
 //-----------------------------------------------------------------------------
 void CHL2MP_Player::FlashlightTurnOn( void )
 {
+#ifndef AS_DLL
 	if( flashlight.GetInt() > 0 && IsAlive() )
 	{
+#endif // AS_DLL
 		AddEffects( EF_DIMLIGHT );
 		EmitSound( "HL2Player.FlashlightOn" );
+#ifndef AS_DLL
 	}
+#endif // AS_DLL
 }
 
 

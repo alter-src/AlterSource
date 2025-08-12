@@ -12,7 +12,7 @@
 		"pinCorner"		"0"
 		"visible"		"1"
 		"enabled"		"1"
-		"labelText"		"Text"
+		"labelText"		"#Alpha_CompileText"
 		"textAlignment"	"west"
 		"dulltext"		"0"
 		"brighttext"	"1"

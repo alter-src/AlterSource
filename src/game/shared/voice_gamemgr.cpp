@@ -103,7 +103,11 @@ CVoiceGameMgr::CVoiceGameMgr()
 {
 	m_UpdateInterval = 0;
 	m_nMaxPlayers = 0;
+#ifndef AS_DLL
 	m_iProximityDistance = -1;
+#else
+	m_iProximityDistance = 10;
+#endif // AS_DLL
 }
 
 
@@ -225,7 +229,12 @@ void CVoiceGameMgr::UpdateMasks()
 
 		CPlayerBitVec gameRulesMask;
 		CPlayerBitVec ProximityMask;
+#ifndef AS_DLL
 		bool		bProximity = false;
+#else
+		// ThePixelMoon: we enable proximity voice. why? why not.
+		bool		bProximity = false;
+#endif // AS_DLL
 		if( g_PlayerModEnable[iClient] )
 		{
 			// Build a mask of who they can hear based on the game rules.

@@ -42,8 +42,13 @@ ConVar	sv_stopspeed	( "sv_stopspeed","100", FCVAR_NOTIFY | FCVAR_REPLICATED, "Mi
 ConVar	sv_stopspeed	( "sv_stopspeed","100", FCVAR_NOTIFY | FCVAR_REPLICATED, "Minimum stopping speed when on ground." );
 #endif // DOD_DLL || CSTRIKE_DLL
 
+#ifdef AS_DLL
+ConVar	sv_noclipaccelerate( "sv_noclipaccelerate", "0", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED);
+ConVar	sv_noclipspeed	( "sv_noclipspeed", "2.5", FCVAR_ARCHIVE | FCVAR_NOTIFY | FCVAR_REPLICATED);
+#else
 ConVar	sv_noclipaccelerate( "sv_noclipaccelerate", "5", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED);
 ConVar	sv_noclipspeed	( "sv_noclipspeed", "5", FCVAR_ARCHIVE | FCVAR_NOTIFY | FCVAR_REPLICATED);
+#endif // AS_DLL
 ConVar	sv_specaccelerate( "sv_specaccelerate", "5", FCVAR_NOTIFY | FCVAR_ARCHIVE | FCVAR_REPLICATED);
 ConVar	sv_specspeed	( "sv_specspeed", "3", FCVAR_ARCHIVE | FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar	sv_specnoclip	( "sv_specnoclip", "1", FCVAR_ARCHIVE | FCVAR_NOTIFY | FCVAR_REPLICATED);
@@ -79,7 +84,11 @@ ConVar	sv_wateraccelerate(  "sv_wateraccelerate", "10", FCVAR_NOTIFY | FCVAR_REP
 ConVar	sv_waterfriction(  "sv_waterfriction", "1", FCVAR_NOTIFY | FCVAR_REPLICATED );      
 ConVar	sv_footsteps	( "sv_footsteps", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Play footstep sound for players" );
 ConVar	sv_rollspeed	( "sv_rollspeed", "200", FCVAR_NOTIFY | FCVAR_REPLICATED);
+#ifdef AS_DLL
+ConVar	sv_rollangle	( "sv_rollangle", "1.5", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max view roll angle");
+#else
 ConVar	sv_rollangle	( "sv_rollangle", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max view roll angle");
+#endif // AS_DLL
 #endif // CSTRIKE_DLL
 
 #if defined( DOD_DLL ) || defined( CSTRIKE_DLL ) || defined( HL1MP_DLL )
