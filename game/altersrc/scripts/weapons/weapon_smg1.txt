@@ -37,6 +37,9 @@ WeaponData
 		"burst"				"Weapon_SMG1.Burst"
 	}
 
+	"BuiltRightHanded" "1"
+	"AllowFlipping"    "1"
+
 	// Weapon Sprite data is loaded by the Client DLL.
 	TextureData
 	{

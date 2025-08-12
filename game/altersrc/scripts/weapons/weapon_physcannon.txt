@@ -40,6 +40,9 @@ WeaponData
 		"special3"		"Weapon_PhysCannon.TooHeavy"
 	}
 
+	"BuiltRightHanded" "1"
+	"AllowFlipping"    "1"
+
 	// Weapon Sprite data is loaded by the Client DLL.
 	TextureData
 	{

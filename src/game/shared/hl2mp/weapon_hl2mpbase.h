@@ -53,6 +53,10 @@ public:
 	CBasePlayer* GetPlayerOwner() const;
 	CHL2MP_Player* GetHL2MPPlayerOwner() const;
 
+#ifdef AS_DLL
+	virtual void ItemPostFrame( void );
+#endif // AS_DLL
+
 	void WeaponSound( WeaponSound_t sound_type, float soundtime = 0.0f );
 	
 	CHL2MPSWeaponInfo const	&GetHL2MPWpnData() const;

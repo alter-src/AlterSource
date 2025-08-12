@@ -34,6 +34,9 @@ public:
 	float	m_flTimeAllSuitDevicesOff;
 	bool	m_bNewSprinting;
 	bool	m_bZooming;
+#ifdef AS_DLL
+	bool	m_bHoldingObject;
+#endif // AS_DLL
 	int		m_bitsActiveDevices;
 	int		m_iSquadMemberCount;
 	int		m_iSquadMedicCount;

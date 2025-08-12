@@ -40,6 +40,11 @@ $Project "Client (Alter)"
 			$File	"NextBot\C_NextBot.h"
 		}
 
+		$Folder "Alter DLL"
+		{
+			$File	"altersrc\fx_cs_weaponfx.cpp"
+		}
+
 		$Folder	"HL2 DLL"
 		{
  			$File	"episodic\c_vort_charge_token.cpp"

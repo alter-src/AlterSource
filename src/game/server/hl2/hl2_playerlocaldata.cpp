@@ -28,6 +28,9 @@ BEGIN_SEND_TABLE_NOBASE( CHL2PlayerLocalData, DT_HL2Local )
 	SendPropInt( SENDINFO(m_iSquadMedicCount) ),
 	SendPropBool( SENDINFO(m_fSquadInFollowMode) ),
 	SendPropBool( SENDINFO(m_bWeaponLowered) ),
+#ifdef AS_DLL
+	SendPropBool( SENDINFO(m_bHoldingObject) ),
+#endif // AS_DLL
 	SendPropEHandle( SENDINFO(m_hAutoAimTarget) ),
 	SendPropVector( SENDINFO(m_vecAutoAimPoint) ),
 	SendPropEHandle( SENDINFO(m_hLadder) ),
@@ -69,6 +72,9 @@ CHL2PlayerLocalData::CHL2PlayerLocalData()
 	m_flSuitPowerLoad = 0.0f;
 	m_flTimeAllSuitDevicesOff = 0.0f;
 	m_bZooming = false;
+#ifdef AS_DLL
+	m_bHoldingObject = false;
+#endif // AS_DLL
 	m_bNewSprinting = false;
 	m_bWeaponLowered = false;
 	m_hAutoAimTarget.Set(NULL);

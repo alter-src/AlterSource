@@ -20,7 +20,7 @@ struct model_t;
 #include "mempool.h"
 #include "utllinkedlist.h"
 
-#if defined( CSTRIKE_DLL ) || defined( SDK_DLL )
+#if defined( CSTRIKE_DLL ) || defined( SDK_DLL ) || defined( AS_DLL )
 enum
 {
 	CS_SHELL_9MM = 0,
@@ -157,7 +157,7 @@ private:
 	struct model_t			*m_pHL1ShotgunShell;
 #endif
 
-#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL ) || defined( AS_DLL )
 	struct model_t			*m_pCS_9MMShell;
 	struct model_t			*m_pCS_57Shell;
 	struct model_t			*m_pCS_12GaugeShell;

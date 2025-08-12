@@ -27,6 +27,9 @@ WeaponData
 		"melee_hit_world"	"Weapon_StunStick.Melee_HitWorld"
 	}
 
+	"BuiltRightHanded" "1"
+	"AllowFlipping"    "1"
+
 	// Weapon Sprite data is loaded by the Client DLL.
 	TextureData
 	{

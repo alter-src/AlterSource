@@ -32,6 +32,9 @@ WeaponData
 		"single_shot_npc"	"Weapon_Shotgun.NPC_Single"
 	}
 
+	"BuiltRightHanded" "1"
+	"AllowFlipping"    "1"
+
 	// Weapon Sprite data is loaded by the Client DLL.
 	TextureData
 	{

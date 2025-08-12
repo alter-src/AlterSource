@@ -241,6 +241,11 @@ public:
 	virtual void		PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize );
 	virtual	bool		IsHoldingEntity( CBaseEntity *pEnt );
 	virtual void		ForceDropOfCarriedPhysObjects( CBaseEntity *pOnlyIfHoldindThis );
+#ifdef AS_DLL
+	virtual void		OnPickupObject( void );
+	virtual void		OnDropObject( void );
+	virtual bool		IsHoldingAnyEntity( void ) { return m_HL2Local.m_bHoldingObject; }
+#endif // AS_DLL
 	virtual float		GetHeldObjectMass( IPhysicsObject *pHeldObject );
 
 	virtual bool		IsFollowingPhysics( void ) { return (m_afPhysicsFlags & PFLAG_ONBARNACLE) > 0; }

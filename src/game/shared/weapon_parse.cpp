@@ -166,7 +166,11 @@ void PrecacheFileWeaponInfoDatabase( IFileSystem *pFilesystem, const unsigned ch
 		return;
 
 	KeyValues *manifest = new KeyValues( "weaponscripts" );
+#ifdef AS_DLL
+	if ( manifest->LoadFromFile( pFilesystem, "scripts/weapons/weapon_manifest.txt", "GAME" ) )
+#else
 	if ( manifest->LoadFromFile( pFilesystem, "scripts/weapon_manifest.txt", "GAME" ) )
+#endif
 	{
 		for ( KeyValues *sub = manifest->GetFirstSubKey(); sub != NULL ; sub = sub->GetNextKey() )
 		{
@@ -283,7 +287,11 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* pFilesystem, const char *szWeap
 		return true;
 
 	char sz[128];
+#ifdef AS_DLL
+	Q_snprintf( sz, sizeof( sz ), "scripts/weapons/%s", szWeaponName );
+#else
 	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
+#endif
 
 	KeyValues *pKV = ReadEncryptedKVFile( pFilesystem, sz, pICEKey,
 #if defined( DOD_DLL )

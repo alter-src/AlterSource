@@ -19,7 +19,11 @@
 
 void CServerGameClients::GetPlayerLimits( int& minplayers, int& maxplayers, int &defaultMaxPlayers ) const
 {
+#ifndef AS_DLL
 	minplayers = 2;
+#else
+	minplayers = 1;
+#endif
 #ifdef PLATFORM_64BITS
 	maxplayers = MAX_PLAYERS;
 #else

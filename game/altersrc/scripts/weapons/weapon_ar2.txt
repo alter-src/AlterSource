@@ -38,6 +38,9 @@ WeaponData
 		"double_shot_npc"	"Weapon_AR2.NPC_Double"
 	}
 
+	"BuiltRightHanded" "1"
+	"AllowFlipping"    "1"
+
 	// Weapon Sprite data is loaded by the Client DLL.
 	TextureData
 	{

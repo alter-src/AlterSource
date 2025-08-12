@@ -121,8 +121,13 @@ public:
 
 #define WEAPON_NOCLIP			-1	// clip sizes set to this tell the weapon it doesn't use a clip
 
+#ifdef AS_DLL
+#define	MAX_AMMO_TYPES	256		// ???
+#define MAX_AMMO_SLOTS  256		// not really slots
+#else
 #define	MAX_AMMO_TYPES	32		// ???
 #define MAX_AMMO_SLOTS  32		// not really slots
+#endif // AS_DLL
 
 #define HUD_PRINTNOTIFY		1
 #define HUD_PRINTCONSOLE	2
