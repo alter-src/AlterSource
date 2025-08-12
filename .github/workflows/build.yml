@@ -52,6 +52,11 @@ jobs:
         working-directory: src
         if: runner.os == 'Windows'
 
+      - name: Create ccache folder
+        run: mkdir -p /home/runner/.ccache
+        shell: bash
+        if: runner.os == 'Linux'
+
       - name: Build (Linux)
         run: ${{ matrix.build_script }}
         working-directory: src
