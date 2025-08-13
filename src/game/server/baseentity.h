@@ -1340,6 +1340,18 @@ public:
 		return (int)GetSolid();
 	}
 
+#ifdef AS_DLL
+	void ScriptMakePhysics( int nSolidType, int nSolidFlags, bool asleep ) 
+	{ 
+		VPhysicsInitNormal( (SolidType_t) nSolidType, nSolidFlags, asleep ); 
+	}
+
+	void ScriptDestroyPhysics( void ) 
+	{ 
+		VPhysicsDestroyObject(); 
+	}
+#endif // AS_DLL
+
 	HSCRIPT ScriptGetModelKeyValues( void );
 
 	void ScriptPrecacheModel( const char *name );

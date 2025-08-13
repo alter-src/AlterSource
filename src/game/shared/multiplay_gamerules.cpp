@@ -1893,6 +1893,15 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		pAllTalk->SetString( "tag", "alltalk" );
 
 		pCvarTagList->AddSubKey( pAllTalk );
+
+#ifdef AS_DLL
+		// sv_proximity_voice_enable
+		KeyValues *pProximityVoice = new KeyValues( "sv_proximity_voice_enable" );
+		pProximityVoice->SetString( "convar", "sv_proximity_voice_enable" );
+		pProximityVoice->SetString( "tag", "proximity_voice" );
+
+		pCvarTagList->AddSubKey( pProximityVoice );
+#endif // AS_DLL
 	}
 
 #else

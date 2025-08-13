@@ -1226,6 +1226,14 @@ void CNetPropManager::StoreDataPropValue( typedescription_t *pTypeDesc, CBaseEnt
 	case FIELD_SOUNDNAME:
 	case FIELD_STRING:
 		{
+#ifdef AS_DLL
+			PropInfo_t propInfo = GetEntityPropInfo( pBaseEntity, pszPropName, iElement );
+			if ( !propInfo.m_IsPropValid )
+			{
+				g_pScriptVM->SetValue( hTable, pszPropName, "ERROR VALUE" );
+				break;
+			}
+#endif // AS_DLL
 			string_t propString = *(string_t *)(uint8 *)pEntityPropData;
 			g_pScriptVM->SetValue( hTable, pszPropName, (propString == NULL_STRING) ? "" : STRING(propString) );
 			break;
@@ -1361,7 +1369,14 @@ void CNetPropManager::CollectNestedDataMaps( datamap_t *pMap, CBaseEntity *pBase
 					g_pScriptVM->ReleaseValue( hPropTable );
 				}
 				else
+#ifdef AS_DLL
+				{
+					GetPropStringArray( ToHScript( pBaseEntity ), pTypeDesc->fieldName, 0 ); // fixes a weird bug causing the dataprop to always be invalid
+#endif // AS_DLL
 					StoreDataPropValue( pTypeDesc, pBaseEntity, iOffset, -1, hTable );
+#ifdef AS_DLL
+				}
+#endif // AS_DLL
 			}
 		}
 

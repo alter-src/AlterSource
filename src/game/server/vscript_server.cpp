@@ -28,6 +28,10 @@
 #include "tier0/vcrmode.h"
 #include "in_buttons.h"
 #include "coordsize.h"
+#ifdef AS_DLL
+#include "fmtstr.h"
+#include "te_effect_dispatch.h"
+#endif // AS_DLL
 #include "team.h"
 
 #ifdef TF_DLL
@@ -1506,6 +1510,254 @@ static void Script_EmitSoundEx( HSCRIPT params )
 	CBaseEntity::EmitSound( filter, pOutputEntity ? pOutputEntity->entindex() : -1, soundParams );
 }
 
+#ifdef AS_DLL
+//-----------------------------------------------------------------------------
+bool ScriptDispatchEffect(const char* szName, HSCRIPT params)
+{
+	if (!szName || !*szName)
+		return false;
+
+	CEffectData	data;
+
+	int nFilterParam = -1;
+	bool bSetOrigin = false;
+	Vector vecOriginCache = vec3_origin;
+	EScriptRecipientFilter eFilter = RECIPIENT_FILTER_DEFAULT;
+
+	IScriptVM* pVM = g_pScriptVM;
+	pVM->IfHas<Vector>	( params, "origin",				[&](Vector value)			{ bSetOrigin = true; vecOriginCache = value; data.m_vOrigin = value; });
+	pVM->IfHas<Vector>	( params, "start",				[&](Vector value)			{ data.m_vStart = value; });
+	pVM->IfHas<Vector>	( params, "normal",				[&](Vector value)			{ data.m_vNormal = value; });
+	pVM->IfHas<QAngle>	( params, "angles",				[&](QAngle value)			{ data.m_vAngles = value; });
+	pVM->IfHas<int>		( params, "flags",				[&](int value)				{ data.m_fFlags = value; });
+	pVM->IfHas<int>		( params, "entindex",			[&](int value)				{ data.m_nEntIndex = value; });
+	pVM->IfHas<float>	( params, "scale",				[&](float value)			{ data.m_flScale = value; });
+	pVM->IfHas<float>	( params, "magnitude",			[&](float value)			{ data.m_flMagnitude = value; });
+	pVM->IfHas<float>	( params, "radius",				[&](float value)			{ data.m_flRadius = value; });
+	pVM->IfHas<int>		( params, "attachment_index",	[&](int value)				{ data.m_nAttachmentIndex = value; });
+	pVM->IfHas<int>		( params, "surface_prop",		[&](short value)			{ data.m_nSurfaceProp = value; });
+	pVM->IfHas<int>		( params, "material",			[&](int value)				{ data.m_nMaterial = value; });
+	pVM->IfHas<int>		( params, "damage_type",			[&](int value)				{ data.m_nDamageType = value; });
+	pVM->IfHas<int>		( params, "hitbox",				[&](int value)				{ data.m_nHitBox = value; });
+	pVM->IfHas<int>		( params, "color",				[&](unsigned char value)	{ data.m_nColor = value; });
+	pVM->IfHas<Vector>	( params, "custom_color1",		[&](Vector value)			{ data.m_bCustomColors = true; data.m_CustomColors.m_vecColor1 = value; });
+	pVM->IfHas<Vector>	( params, "custom_color2",		[&](Vector value)			{ data.m_bCustomColors = true; data.m_CustomColors.m_vecColor2 = value; });
+	pVM->IfHas<int>		( params, "attach_type",			[&](int value)				{ data.m_bControlPoint1 = true; data.m_ControlPoint1.m_eParticleAttachment = ParticleAttachment_t(value); });
+	pVM->IfHas<Vector>	( params, "attach_offset",		[&](Vector value)			{ data.m_bControlPoint1 = true; data.m_ControlPoint1.m_vecOffset = value; });
+	pVM->IfHas<int>		( params, "filter_type",			[&](int value)				{ eFilter = EScriptRecipientFilter(value); });
+	pVM->IfHas<int>		( params, "filter_param",		[&](int value)				{ nFilterParam = value; });
+
+	CScriptRecipientFilter filter;
+	SetupScriptRecipientFilter(filter, eFilter, nFilterParam, bSetOrigin ? &vecOriginCache : NULL, UTIL_EntityByIndex(data.m_nEntIndex), NULL);
+
+	DispatchEffect(szName, data, filter);
+
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+HSCRIPT ScriptUserMessageBegin( const char* szMessageName )
+{
+	CScriptUserMessage* pUserMessage = new CScriptUserMessage( szMessageName );
+	HSCRIPT hScriptInstance = g_pScriptVM->RegisterInstance( pUserMessage );
+	return hScriptInstance;
+}
+
+CScriptUserMessage::CScriptUserMessage( const char* szMessageName )
+{
+	V_strncpy(m_szMessageName, szMessageName, sizeof(m_szMessageName));
+}
+
+#define WRITE_SCRIPTUSERMESSAGE_INT( type, fn ) case type: { fn(V_atoi(m_szDataValues[i])); break; }
+
+#define WRITE_SCRIPTUSERMESSAGE_FLOAT( type, fn ) case type: { fn(V_atof(m_szDataValues[i])); break; }
+
+#define WRITE_SCRIPTUSERMESSAGE_VEC3( type, vectype, fn, fallback ) \
+	case type: { \
+		float x = 0.0f, y = 0.0f, z = 0.0f; \
+		if (sscanf(m_szDataValues[i], "%f %f %f", &x, &y, &z) == 3) { \
+			fn(vectype(x, y, z)); \
+		} else { \
+			fn(fallback); \
+		} \
+		break; \
+	}
+
+void CScriptUserMessage::Execute( HSCRIPT filterParams )
+{
+	EScriptRecipientFilter eFilter = RECIPIENT_FILTER_DEFAULT;
+	bool bSetOrigin = false;
+	Vector vecOriginCache = vec3_origin;
+	CBaseEntity* pFilterEntity = NULL;
+	int nFilterParam = -1;
+
+	IScriptVM* pVM = g_pScriptVM;
+	pVM->IfHas<int>		(filterParams, "filter_type",	[&](int value)		{ eFilter = EScriptRecipientFilter(value); });
+	pVM->IfHas<Vector>	(filterParams, "filter_origin", [&](Vector value)	{ vecOriginCache = value; bSetOrigin = true; });
+	pVM->IfHas<HSCRIPT>	(filterParams, "filter_entity", [&](HSCRIPT value)	{ CBaseEntity* pEntity = ToEnt(value); if (pEntity) pFilterEntity = pEntity; });
+	pVM->IfHas<int>		(filterParams, "filter_param",	[&](int value)		{ nFilterParam = value; });
+
+	CScriptRecipientFilter filter;
+	SetupScriptRecipientFilter( filter, eFilter, nFilterParam, bSetOrigin ? &vecOriginCache : NULL, pFilterEntity, NULL );
+
+	UserMessageBegin( filter, m_szMessageName );
+
+	for ( int i = 0; i < iDataCount; i++ )
+	{
+		switch ( m_iDataTypes[i] )
+		{
+			WRITE_SCRIPTUSERMESSAGE_INT( TYPE_BYTE, WRITE_BYTE );
+			WRITE_SCRIPTUSERMESSAGE_INT( TYPE_CHAR, WRITE_CHAR );
+			WRITE_SCRIPTUSERMESSAGE_INT( TYPE_SHORT, WRITE_SHORT );
+			WRITE_SCRIPTUSERMESSAGE_INT( TYPE_WORD, WRITE_WORD );
+			WRITE_SCRIPTUSERMESSAGE_INT( TYPE_LONG, WRITE_LONG );
+
+			WRITE_SCRIPTUSERMESSAGE_FLOAT( TYPE_FLOAT, WRITE_FLOAT );
+			WRITE_SCRIPTUSERMESSAGE_FLOAT( TYPE_ANGLE, WRITE_ANGLE );
+			WRITE_SCRIPTUSERMESSAGE_FLOAT( TYPE_COORD, WRITE_COORD );
+
+			WRITE_SCRIPTUSERMESSAGE_VEC3( TYPE_VEC3COORD, Vector, WRITE_VEC3COORD, vec3_origin );
+			WRITE_SCRIPTUSERMESSAGE_VEC3( TYPE_VEC3NORMAL, Vector, WRITE_VEC3NORMAL, vec3_origin );
+			WRITE_SCRIPTUSERMESSAGE_VEC3( TYPE_ANGLES, QAngle, WRITE_ANGLES, vec3_angle );
+
+			case TYPE_STRING:
+			{
+				WRITE_STRING( m_szDataValues[i] );
+				break;
+			}
+			case TYPE_BOOL:
+			{
+				WRITE_BOOL( m_szDataValues[i] );
+				break;
+			}
+		}
+	}
+
+	MessageEnd();
+}
+
+void CScriptUserMessage::WriteValue( const char* pszValue, int iType )
+{
+	if ( iDataCount >= MAX_SCRIPT_USERMESSAGE_DATA )
+	{
+		Warning( "Adding too much data to a Script User Message!" );
+		return;
+	}
+
+	m_iDataTypes[iDataCount] = iType;
+	V_strncpy( m_szDataValues[iDataCount], pszValue, sizeof( m_szDataValues[0] ) );
+	iDataCount++;
+}
+
+void CScriptUserMessage::WriteByte(int iValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", iValue);
+    WriteValue(szBuffer, TYPE_BYTE);
+}
+
+void CScriptUserMessage::WriteChar(int iValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", iValue);
+    WriteValue(szBuffer, TYPE_CHAR);
+}
+
+void CScriptUserMessage::WriteShort(int iValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", iValue);
+    WriteValue(szBuffer, TYPE_SHORT);
+}
+
+void CScriptUserMessage::WriteWord(int iValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", iValue);
+    WriteValue(szBuffer, TYPE_WORD);
+}
+
+void CScriptUserMessage::WriteLong(int iValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", iValue);
+    WriteValue(szBuffer, TYPE_LONG);
+}
+
+void CScriptUserMessage::WriteFloat( float flValue )
+{
+	char szBuffer[512];
+	Q_snprintf(szBuffer, sizeof(szBuffer), "%.2f", flValue);
+	WriteValue( szBuffer, TYPE_FLOAT );
+}
+
+void CScriptUserMessage::WriteAngle( float flValue )
+{
+	char szBuffer[512];
+	Q_snprintf(szBuffer, sizeof(szBuffer), "%.2f", flValue);
+	WriteValue( szBuffer, TYPE_ANGLE );
+}
+
+void CScriptUserMessage::WriteCoord( float flValue )
+{
+	char szBuffer[512];
+	Q_snprintf(szBuffer, sizeof(szBuffer), "%.2f", flValue);
+	WriteValue( szBuffer, TYPE_COORD );
+}
+
+void CScriptUserMessage::WriteVec3Coord( const Vector& rgflValue )
+{
+	char szBuffer[512];
+	Q_snprintf( szBuffer, sizeof( szBuffer ), "%.6f %.6f %.6f", rgflValue.x, rgflValue.y, rgflValue.z );
+	WriteValue( szBuffer, TYPE_VEC3COORD );
+}
+
+void CScriptUserMessage::WriteVec3Normal( const Vector& rgflValue )
+{
+	char szBuffer[512];
+	Q_snprintf( szBuffer, sizeof( szBuffer ), "%.6f %.6f %.6f", rgflValue.x, rgflValue.y, rgflValue.z );
+	WriteValue( szBuffer, TYPE_VEC3NORMAL );
+}
+
+void CScriptUserMessage::WriteAngles( const QAngle& rgflValue )
+{
+	char szBuffer[512];
+	Q_snprintf( szBuffer, sizeof( szBuffer ), "%.6f %.6f %.6f", rgflValue.x, rgflValue.y, rgflValue.z );
+	WriteValue( szBuffer, TYPE_ANGLES );
+}
+
+void CScriptUserMessage::WriteString( const char* pszValue )
+{
+	char szBuffer[512];
+	V_strcpy( szBuffer, pszValue );
+	WriteValue( szBuffer, TYPE_STRING );
+}
+
+void CScriptUserMessage::WriteBool(bool bValue)
+{
+    char szBuffer[512];
+    Q_snprintf(szBuffer, sizeof(szBuffer), "%d", bValue ? 1 : 0);
+    WriteValue(szBuffer, TYPE_BOOL);
+}
+
+BEGIN_SCRIPTDESC_ROOT(CScriptUserMessage, "ScriptPlayerMessage")
+	DEFINE_SCRIPTFUNC(Execute, "Executes the User Message")
+	DEFINE_SCRIPTFUNC(WriteByte, "Write a Byte to the User Message")
+	DEFINE_SCRIPTFUNC(WriteChar, "Write a Char to the User Message")
+	DEFINE_SCRIPTFUNC(WriteShort, "Write a Short to the User Message")
+	DEFINE_SCRIPTFUNC(WriteWord, "Write a Word to the User Message")
+	DEFINE_SCRIPTFUNC(WriteLong, "Write a Long to the User Message")
+	DEFINE_SCRIPTFUNC(WriteFloat, "Write a Float to the User Message")
+	DEFINE_SCRIPTFUNC(WriteAngle, "Write a Float Angle to the User Message")
+	DEFINE_SCRIPTFUNC(WriteCoord, "Write a Float Coordinate to the User Message")
+	DEFINE_SCRIPTFUNC(WriteVec3Coord, "Write a Vector to the User Message")
+	DEFINE_SCRIPTFUNC(WriteVec3Normal, "Write a Vector Normal to the User Message")
+	DEFINE_SCRIPTFUNC(WriteAngles, "Write a QAngle to the User Message")
+	DEFINE_SCRIPTFUNC(WriteString, "Write a String to the User Message")
+	DEFINE_SCRIPTFUNC(WriteBool, "Write a Boolean to the User Message")
+END_SCRIPTDESC()
+#endif // AS_DLL
+
 //-----------------------------------------------------------------------------
 static bool Script_PrecacheItemFromTable( HSCRIPT hSpawnTable )
 {
@@ -1766,6 +2018,9 @@ static const char *Script_FileToString( const char *pszFileName )
 	if ( iFLen > FILE_TO_STRING_BUF_SIZE )
 	{
 		Warning("File %s (from %s) is len %d too long for a ScriptFileRead\n", szFilePath, pszFileName, iFLen );
+#ifdef AS_DLL
+		g_pFullFileSystem->Close( hFile );
+#endif // AS_DLL
 		return NULL;
 	}
 	g_pFullFileSystem->Seek( hFile, 0, FILESYSTEM_SEEK_HEAD );
@@ -2514,6 +2769,9 @@ bool VScriptServerInit()
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptFireGameEvent, "FireGameEvent", "Fire a game event to a listening callback function in script. Parameters are passed in a squirrel table." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptFireScriptHook, "FireScriptHook", "Fire a script hoook to a listening callback function in script. Parameters are passed in a squirrel table." );
 				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptSendGlobalGameEvent, "SendGlobalGameEvent", "Sends a real game event to everything. Parameters are passed in a squirrel table." );
+#ifdef AS_DLL
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptDispatchEffect, "DispatchEffect", "Dispatch a client effect with an optional filter. Parameters are passed in a squirrel table." );
+#endif
 				ScriptRegisterFunction( g_pScriptVM, ScriptHooksEnabled, "Returns whether script hooks are currently enabled." );
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_SpawnEntityFromTable, "SpawnEntityFromTable", "Spawn entity from KeyValues in table - 'name' is entity name, rest are KeyValues for spawn." );
@@ -2554,6 +2812,10 @@ bool VScriptServerInit()
 #endif
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_PickupObject, "PickupObject", "Have a player pickup a nearby named entity" );
+
+#ifdef AS_DLL
+				ScriptRegisterFunctionNamed( g_pScriptVM, ScriptUserMessageBegin, "UserMessageBegin", "" );
+#endif // AS_DLL
 
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_StringToFile, "StringToFile", "Store a string to a file for later reading" );
 				ScriptRegisterFunctionNamed( g_pScriptVM, Script_FileToString, "FileToString", "Reads a string from a file to send to script" );

@@ -32,6 +32,9 @@
 	#include "doors.h"
 	#include "ai_basenpc.h"
 	#include "env_zoom.h"
+#ifdef AS_DLL
+	#include "ammodef.h"
+#endif // AS_DLL
 
 	extern int TrainSpeed(int iSpeed, int iMax);
 	
@@ -56,7 +59,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#if defined(GAME_DLL) && !defined(_XBOX)
+#if defined(GAME_DLL)
+#ifdef AS_DLL
+ConVar sv_infinite_ammo( "sv_infinite_ammo", "0", FCVAR_CHEAT, "Player's active weapon will never run out of ammo. If set to 2 then player has infinite total ammo but still has to reload the magazine." );
+#endif // AS_DLL
+#if !defined(_XBOX)
 	extern ConVar sv_pushaway_max_force;
 	extern ConVar sv_pushaway_force;
 	extern ConVar sv_turbophysics;
@@ -85,6 +92,7 @@
 			return g_pGameRules->CanEntityBeUsePushed( pEntity );
 		}
 	};
+#endif
 #endif
 
 #ifdef CLIENT_DLL
@@ -289,6 +297,40 @@ void CBasePlayer::ItemPostFrame()
 
 #if !defined( CLIENT_DLL )
 	ImpulseCommands();
+
+#ifdef AS_DLL
+	if( sv_infinite_ammo.GetBool() && GetActiveWeapon() )
+	{
+		CBaseCombatWeapon* pWeapon = GetActiveWeapon();
+
+		// only refill clip when sv_infinite_ammo == 1 -copperpixel
+		if( sv_infinite_ammo.GetInt() == 1 )
+		{
+			pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
+			pWeapon->m_iClip2 = pWeapon->GetMaxClip2();
+		}
+
+		int iPrimaryAmmoType = pWeapon->GetPrimaryAmmoType();
+		if( iPrimaryAmmoType >= 0 )
+		{
+			GiveAmmo(
+				GetAmmoDef()->MaxCarry( iPrimaryAmmoType ),
+				GetAmmoDef()->GetAmmoOfIndex( iPrimaryAmmoType )->pName,
+				true
+			);
+		}
+
+		int iSecondaryAmmoType = pWeapon->GetSecondaryAmmoType();
+		if( iSecondaryAmmoType >= 0 )
+		{
+			GiveAmmo(
+				GetAmmoDef()->MaxCarry( iSecondaryAmmoType ),
+				GetAmmoDef()->GetAmmoOfIndex( iSecondaryAmmoType )->pName,
+				true
+			);
+		}
+	}
+#endif
 #else
 	// NOTE: If we ever support full impulse commands on the client,
 	// remove this line and call ImpulseCommands instead.

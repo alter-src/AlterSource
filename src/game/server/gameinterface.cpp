@@ -957,6 +957,15 @@ float g_flServerCurTime = 0.0f;
 bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, char const *pOldLevel, char const *pLandmarkName, bool loadGame, bool background )
 {
 	VPROF("CServerGameDLL::LevelInit");
+#ifdef AS_DLL
+	// ThePixelMoon: the singleplayer crash issue seems to be with cl_localnetworkbackdoor. we need to set it to 1 or 0 according to the maximum players value
+	ConVar *cl_localnetworkbackdoor = cvar->FindVar( "cl_localnetworkbackdoor" );
+
+	if ( gpGlobals->maxClients == 1 )
+		cl_localnetworkbackdoor->SetValue( "0" );
+	else
+		cl_localnetworkbackdoor->SetValue( "1" );
+#endif // AS_DLL
 
 	g_flServerCurTime = gpGlobals->curtime;
 
@@ -3087,7 +3096,11 @@ float CServerGameClients::ProcessUsercmds( edict_t *player, bf_read *buf, int nu
 	}
 
 	// Client not fully connected or server has gone inactive  or is paused, just ignore
+#ifndef AS_DLL
 	if ( ignore || !pPlayer )
+#else
+	if ( ignore || paused || !pPlayer )
+#endif // AS_DLL
 	{
 		return 0.0f;
 	}

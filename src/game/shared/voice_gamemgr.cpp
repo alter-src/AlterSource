@@ -93,7 +93,10 @@ CVoiceGameMgr* GetVoiceGameMgr()
 	return &g_VoiceGameMgr;
 }
 
-
+#ifdef AS_DLL
+ConVar sv_proximity_voice_enable( "sv_proximity_voice_enable", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Enable proximity voice chat" );
+ConVar sv_proximity_voice_distance( "sv_proximity_voice_distance", "2048", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max distance at which voice will be projected" );
+#endif // AS_DLL
 
 // ------------------------------------------------------------------------ //
 // CVoiceGameMgr.
@@ -105,8 +108,6 @@ CVoiceGameMgr::CVoiceGameMgr()
 	m_nMaxPlayers = 0;
 #ifndef AS_DLL
 	m_iProximityDistance = -1;
-#else
-	m_iProximityDistance = 10;
 #endif // AS_DLL
 }
 
@@ -232,8 +233,8 @@ void CVoiceGameMgr::UpdateMasks()
 #ifndef AS_DLL
 		bool		bProximity = false;
 #else
-		// ThePixelMoon: we enable proximity voice. why? why not.
-		bool		bProximity = false;
+		// ThePixelMoon: fuck, i forgot to turn it to true last time!
+		bool		bProximity =  sv_proximity_voice_enable.GetBool();
 #endif // AS_DLL
 		if( g_PlayerModEnable[iClient] )
 		{
@@ -241,8 +242,13 @@ void CVoiceGameMgr::UpdateMasks()
 			for(int iOtherClient=0; iOtherClient < m_nMaxPlayers; iOtherClient++)
 			{
 				CBaseEntity *pEnt = UTIL_PlayerByIndex(iOtherClient+1);
+#ifndef AS_DLL
 				if(pEnt && pEnt->IsPlayer() && 
 					(bAllTalk || m_pHelper->CanPlayerHearPlayer(pPlayer, (CBasePlayer*)pEnt, bProximity )) )
+#else
+				if( pEnt && pEnt->IsPlayer() && CheckProximity( pPlayer->GetAbsOrigin().DistTo( pEnt->GetAbsOrigin() ) ) &&
+					( bAllTalk || m_pHelper->CanPlayerHearPlayer( pPlayer, ( CBasePlayer* )pEnt, bProximity ) ) )
+#endif // AS_DLL
 				{
 					gameRulesMask[iOtherClient] = true;
 					ProximityMask[iOtherClient] = bProximity;
@@ -287,15 +293,27 @@ bool CVoiceGameMgr::IsPlayerIgnoringPlayer( int iTalker, int iListener )
 	return !!g_BanMasks[iListener-1][iTalker-1];
 }
 
+#ifndef AS_DLL
 void CVoiceGameMgr::SetProximityDistance( int iDistance )
 {
 	m_iProximityDistance = iDistance;
 }
+#endif // AS_DLL
 
+#ifndef AS_DLL
 bool CVoiceGameMgr::CheckProximity( int iDistance )
+#else
+bool CVoiceGameMgr::CheckProximity( float flDistance )
+#endif // AS_DLL
 {
+#ifndef AS_DLL
 	if ( m_iProximityDistance >= iDistance )
 		return true;
 
 	return false;
+#else
+	return sv_proximity_voice_enable.GetBool() ?
+		flDistance <= sv_proximity_voice_distance.GetFloat() :
+		true;
+#endif // AS_DLL
 }

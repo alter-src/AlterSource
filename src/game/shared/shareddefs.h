@@ -183,7 +183,11 @@ enum
 #define MAX_VOTE_DETAILS_LENGTH 64
 #define INVALID_ISSUE			-1
 #define MAX_VOTE_OPTIONS		5
+#ifndef AS_DLL
 #define DEDICATED_SERVER		99
+#else
+#define DEDICATED_SERVER		255
+#endif // AS_DLL
 
 enum CastVote
 {

@@ -247,6 +247,10 @@ public:
 	virtual void	StopMessageMode( void );
 	void			Send( void );
 
+#ifdef AS_DLL
+	virtual void 	OnKeyCodeTyped( vgui::KeyCode code );
+#endif // AS_DLL
+
 	MESSAGE_FUNC( OnChatEntrySend, "ChatEntrySend" );
 	MESSAGE_FUNC( OnChatEntryStopMessageMode, "ChatEntryStopMessageMode" );
 

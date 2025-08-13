@@ -2259,7 +2259,12 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptInputKill, "Kill", "" )
 	DEFINE_SCRIPTFUNC( GetClassname, "" )
+#ifndef AS_DLL
 	DEFINE_SCRIPTFUNC_NAMED( GetEntityNameAsCStr, "GetName", "" )
+#else
+	DEFINE_SCRIPTFUNC_NAMED( GetEntityNameAsCStr, "GetName", "!!!LEGACY FOR COMPAT!!! Use GetTargetname" )
+	DEFINE_SCRIPTFUNC_NAMED( GetEntityNameAsCStr, "GetTargetname", "" )
+#endif // AS_DLL
 	DEFINE_SCRIPTFUNC( GetPreTemplateName, "Get the entity name stripped of template unique decoration" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetEHandle, "GetEntityHandle", "Get the entity as an EHANDLE" )
 
@@ -2404,6 +2409,11 @@ BEGIN_ENT_SCRIPTDESC_ROOT( CBaseEntity, "Root class of all server-side entities"
 	DEFINE_SCRIPTFUNC_NAMED( ScriptGetSolid, "GetSolid", "" )
 	DEFINE_SCRIPTFUNC_NAMED( ScriptSetSolid, "SetSolid", "" )
 	
+#ifdef AS_DLL
+	DEFINE_SCRIPTFUNC_NAMED( ScriptMakePhysics, "MakePhysical", "Give the entity physics" )
+	DEFINE_SCRIPTFUNC_NAMED( ScriptDestroyPhysics, "DestroyPhysics", "Remove the entity physics" )
+#endif // AS_DLL
+
 	DEFINE_SCRIPTFUNC( TerminateScriptScope, "Clear the current script scope for this entity" )
 
 	DEFINE_SCRIPTFUNC_NAMED( ScriptAcceptInput, "AcceptInput", "Generate a synchronous I/O event" )
@@ -5784,7 +5794,11 @@ void CC_Ent_SetName( const CCommand& args )
 {
 	CBaseEntity *pEntity = NULL;
 
+#ifdef AS_DLL
+	if ( args.ArgC() < 2 )
+#else
 	if ( args.ArgC() < 1 )
+#endif // AS_DLL
 	{
 		CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
 		if (!pPlayer)
@@ -5805,9 +5819,15 @@ void CC_Ent_SetName( const CCommand& args )
 			CBaseEntity *ent = NULL;
 			while ( (ent = gEntList.NextEnt(ent)) != NULL )
 			{
+#ifndef AS_DLL
 				if (  (ent->GetEntityName() != NULL_STRING	&& FStrEq(args[1], STRING(ent->GetEntityName())))	|| 
 					  (ent->m_iClassname != NULL_STRING	&& FStrEq(args[1], STRING(ent->m_iClassname))) ||
 					  (ent->GetClassname()!=NULL && FStrEq(args[1], ent->GetClassname())))
+#else
+				if (( ent->GetEntityName() != NULL_STRING && FStrEq( args[2], STRING( ent->GetEntityName() ) ) ) ||
+					( ent->m_iClassname != NULL_STRING && FStrEq( args[2], STRING( ent->m_iClassname ) ) ) ||
+					( ent->GetClassname() != NULL && FStrEq( args[2], ent->GetClassname() ) ) )
+#endif // AS_DLL
 				{
 					pEntity = ent;
 					break;
@@ -8311,7 +8331,11 @@ bool CBaseEntity::ValidateScriptScope()
 //-----------------------------------------------------------------------------
 void CBaseEntity::RunVScripts()
 {
+#ifdef AS_DLL
+	if( m_iszVScripts == NULL_STRING || !ValidateScriptScope() )
+#else
 	if( m_iszVScripts == NULL_STRING )
+#endif // AS_DLL
 	{
 		return;
 	}
@@ -8388,7 +8412,11 @@ void CBaseEntity::RunVScripts()
 //--------------------------------------------------------------------------------------------------
 void CBaseEntity::RunPrecacheScripts( void )
 {
+#ifdef AS_DLL
+	if( m_iszVScripts == NULL_STRING || !ValidateScriptScope() )
+#else
 	if( m_iszVScripts == NULL_STRING )
+#endif // AS_DLL
 	{
 		return;
 	}
@@ -8403,7 +8431,11 @@ void CBaseEntity::RunPrecacheScripts( void )
 
 void CBaseEntity::RunOnPostSpawnScripts( void )
 {
+#ifdef AS_DLL
+	if( m_iszVScripts == NULL_STRING || !ValidateScriptScope() )
+#else
 	if( m_iszVScripts == NULL_STRING )
+#endif // AS_DLL
 	{
 		return;
 	}

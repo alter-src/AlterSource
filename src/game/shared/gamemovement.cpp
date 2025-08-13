@@ -3189,7 +3189,12 @@ int CGameMovement::ClipVelocity( Vector& in, Vector& normal, Vector& out, float 
 	{
 		// Redirect clipped velocity along angle of movement
 		float flLen = out.Length();
+#ifndef AS_DLL
 		out *= ( -1.f * flBlocked * flRedirectCoeff + flLen ) / flLen;
+#else
+		if ( flLen != 0.0f )
+			out *= ( -1.f * flBlocked * flRedirectCoeff + flLen ) / flLen;
+#endif // AS_DLL
 	}
 
 	// Return blocking flags.

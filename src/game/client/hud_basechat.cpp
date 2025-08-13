@@ -180,9 +180,17 @@ wchar_t* ReadChatTextString( bf_read &msg, OUT_Z_BYTECAP(outSizeInBytes) wchar_t
 			{
 				// mark the next seven or nine characters. one for the control character and six or eight for the code itself.
 				const int nSkip = ( *test == COLOR_HEXCODE ? 7 : 9 );
+#ifndef AS_DLL
 				for ( int i = 0; i < nSkip && *test != 0; i++, test++ )
+#else
+				for ( int i = 0; i < nSkip && *test != 0; i++ )
+#endif // AS_DLL
 				{
+#ifndef AS_DLL
 					*test = COLOR_NORMAL;
+#else
+					*++test = COLOR_NORMAL;
+#endif // AS_DLL
 				}
 
 				// if we reached the end of the string first, then back up
@@ -1274,6 +1282,22 @@ void CBaseHudChat::StopMessageMode( void )
 #endif
 }
 
+#ifdef AS_DLL
+//-----------------------------------------------------------------------------
+// Purpose: Allows to close the chat after clicking on text.
+//-----------------------------------------------------------------------------
+void CBaseHudChat::OnKeyCodeTyped( vgui::KeyCode code )
+{
+	if ( code == KEY_ESCAPE || code == KEY_ENTER )
+	{
+		StopMessageMode();
+		return;
+	}
+
+	BaseClass::OnKeyCodeTyped( code );
+}
+#endif // AS_DLL
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1880,3 +1904,14 @@ void CBaseHudChat::FireGameEvent( IGameEvent *event )
 	}
 #endif
 }
+
+#ifdef AS_DLL
+CON_COMMAND( cl_clearchathistory, "Clears the chat history" )
+{
+	CBaseHudChat *pChat = ( CBaseHudChat * ) gHUD.FindElement( "CHudChat" );
+	if ( pChat )
+	{
+		pChat->GetChatHistory()->SetText( "" );
+	}
+}
+#endif // AS_DLL

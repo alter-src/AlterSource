@@ -3464,7 +3464,14 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 	if ( State_Get() != GR_STATE_RND_RUNNING )
 		return 0;
 
+#ifndef AS_DLL
 	if ( mp_disable_respawn_times.GetBool() == true )
+#else
+	// Legacy support to respawn everyone
+	if ( mp_disable_respawn_times.GetInt() == 1 )
+		return 0.0f;
+	if ( mp_disable_respawn_times.GetInt() & (1 << iTeam) )
+#endif // AS_DLL
 		return 0.0f;
 
 	//Let's just turn off respawn times while players are messing around waiting for the tournament to start

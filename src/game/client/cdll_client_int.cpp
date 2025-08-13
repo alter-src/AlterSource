@@ -335,6 +335,10 @@ static ConVar s_CV_ShowParticleCounts("showparticlecounts", "0", 0, "Display num
 static ConVar s_cl_team("cl_team", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default team when joining a game");
 static ConVar s_cl_class("cl_class", "default", FCVAR_USERINFO|FCVAR_ARCHIVE, "Default class when joining a game");
 
+#ifdef AS_DLL
+ConVar cl_no_texture_stream( "cl_no_texture_stream", "0", FCVAR_ARCHIVE );
+#endif // AS_DLL
+
 #ifdef HL1MP_CLIENT_DLL
 static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "Mount the content from Half-Life: Source if possible");
 #endif
@@ -898,6 +902,14 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	ClientSteamContext().Activate();
 #endif
 
+#ifdef AS_DLL
+	// if -no_texture_stream isn't enabled, append the parm if we're using the cvar
+	if ( cl_no_texture_stream.GetBool() && !CommandLine()->CheckParm( "-no_texture_stream" ) )
+	{
+		CommandLine()->AppendParm( "-no_texture_stream", NULL );
+	}
+#endif // AS_DLL
+
 	// We aren't happy unless we get all of our interfaces.
 	// please don't collapse this into one monolithic boolean expression (impossible to debug)
 	if ( (engine = (IVEngineClient *)appSystemFactory( VENGINE_CLIENT_INTERFACE_VERSION, NULL )) == NULL )
@@ -1182,6 +1194,12 @@ void CHLClient::PostInit()
 			g_pFullFileSystem->AddSearchPath( szPath, "GAME" );
 		}
 	}
+#endif
+
+#if !defined( _X360 ) && !defined( NO_STEAM ) && defined( AS_DLL )
+	// This needs to be called every time the game is launched since Steam doesn't save the updated position
+	extern void SetSteamOverlayToastPosition( void ); // from clientmode_shared.cpp
+	SetSteamOverlayToastPosition();
 #endif
 
 	if ( !r_lightmap_bicubic_set.GetBool() && materials )

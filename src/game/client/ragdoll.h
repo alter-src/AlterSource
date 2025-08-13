@@ -88,6 +88,10 @@ public:
 	void ResetRagdollSleepAfterTime( void );
 	float GetLastVPhysicsUpdateTime() const { return m_lastUpdate; }
 
+#ifdef AS_DLL
+	void    AcquireOrCopyBoneCache( matrix3x4_t* pBonesToWorld, int boneCount );
+#endif // AS_DLL
+
 private:
 
 	void			CheckSettleStationaryRagdoll();
@@ -101,6 +105,10 @@ private:
 	bool		m_allAsleep;
 	Vector		m_vecLastOrigin;
 	float		m_flLastOriginChangeTime;
+#ifdef AS_DLL
+	CUtlVector< matrix3x4_t > m_BoneCache;
+	float		m_flBoneCacheTime;
+#endif // AS_DLL
 
 #if RAGDOLL_VISUALIZE
 	matrix3x4_t			m_savedBone1[MAXSTUDIOBONES];

@@ -84,9 +84,15 @@ void CFuncMoveLinear::Spawn( void )
 		m_flMoveDistance = DotProductAbs( m_vecMoveDir, vecOBB ) - m_flLip;
 	}
 
+#ifdef AS_DLL
+	m_vecPosition1 = GetLocalOrigin() - (m_vecMoveDir * m_flMoveDistance * m_flStartPosition);
+	m_vecPosition2 = m_vecPosition1 + (m_vecMoveDir * m_flMoveDistance);
+	m_vecFinalDest = GetLocalOrigin();
+#else
 	m_vecPosition1 = GetAbsOrigin() - (m_vecMoveDir * m_flMoveDistance * m_flStartPosition);
 	m_vecPosition2 = m_vecPosition1 + (m_vecMoveDir * m_flMoveDistance);
 	m_vecFinalDest = GetAbsOrigin();
+#endif // AS_DLL
 
 	SetTouch( NULL );
 
@@ -256,11 +262,19 @@ void CFuncMoveLinear::MoveDone( void )
 	SetNextThink( gpGlobals->curtime + 0.1f );
 	BaseClass::MoveDone();
 
+#ifdef AS_DLL
+	if ( GetLocalOrigin() == m_vecPosition2 )
+#else
 	if ( GetAbsOrigin() == m_vecPosition2 )
+#endif // AS_DLL
 	{
 		m_OnFullyOpen.FireOutput( this, this );
 	}
-	else if ( GetAbsOrigin() == m_vecPosition1 )
+#ifdef AS_DLL
+	if ( GetLocalOrigin() == m_vecPosition1 )
+#else
+	if ( GetAbsOrigin() == m_vecPosition1 )
+#endif // AS_DLL
 	{
 		m_OnFullyClosed.FireOutput( this, this );
 	}

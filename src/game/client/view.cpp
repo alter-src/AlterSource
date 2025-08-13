@@ -123,6 +123,9 @@ static ConVar r_mapextents( "r_mapextents", "16384", FCVAR_CHEAT,
 ConVar	gl_clear( "gl_clear", "0");
 ConVar	gl_clear_randomcolor( "gl_clear_randomcolor", "0", FCVAR_CHEAT, "Clear the back buffer to random colors every frame. Helps spot open seams in geometry." );
 
+#ifdef AS_DLL
+static ConVar r_nearz( "r_nearz", "-1", FCVAR_CHEAT, "Override the near clipping plane." );
+#endif // AS_DLL
 static ConVar r_farz( "r_farz", "-1", FCVAR_CHEAT, "Override the far clipping plane. -1 means to use the value in env_fog_controller." );
 static ConVar cl_demoviewoverride( "cl_demoviewoverride", "0", 0, "Override view during demo playback" );
 
@@ -592,7 +595,18 @@ static QAngle s_DbgSetupAngles;
 //-----------------------------------------------------------------------------
 float CViewRender::GetZNear()
 {
+#ifndef AS_DLL
 	return VIEW_NEARZ;
+#else
+	// Initialize view structure with default values
+	float nearZ;
+	if ( r_nearz.GetFloat() < 0 ) // TODO: scale/change based on current FOV
+		nearZ = VIEW_NEARZ;
+	else
+		nearZ = r_nearz.GetFloat();
+
+	return nearZ;
+#endif // AS_DLL
 }
 
 float CViewRender::GetZFar()

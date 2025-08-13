@@ -757,7 +757,7 @@ void CPlayerPickupController::Shutdown( bool bThrown )
 		{
 			pOwner->EnableSprint( true );
 #ifdef AS_DLL
-			pOwner->OnPickupObject();
+			pOwner->OnDropObject();
 #endif // AS_DLL
 		}
 
@@ -1077,7 +1077,11 @@ bool CWeaponPhysCannon::Deploy( void )
 
 	if ( pOwner )
 	{
+#ifndef AS_DLL
 		pOwner->SetNextAttack( gpGlobals->curtime );
+#else
+		pOwner->SetNextAttack( gpGlobals->curtime + 0.25f );
+#endif // AS_DLL
 	}
 
 	return bReturn;

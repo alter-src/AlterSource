@@ -54,8 +54,12 @@ public:
 	// Returns true if it handled the command.
 	bool				ClientCommand(CBasePlayer *pPlayer, const CCommand &args );
 
+#ifndef AS_DLL
 	bool				CheckProximity( int iDistance );
 	void				SetProximityDistance( int iDistance );
+#else
+	bool				CheckProximity( float flDistance );
+#endif // AS_DLL
 
 	bool				IsPlayerIgnoringPlayer( int iTalker, int iListener );
 
@@ -69,7 +73,9 @@ private:
 	IVoiceGameMgrHelper	*m_pHelper;
 	int					m_nMaxPlayers;
 	double				m_UpdateInterval;						// How long since the last update.
+#ifndef AS_DLL
 	int					m_iProximityDistance;
+#endif // AS_DLL
 };
 
 
