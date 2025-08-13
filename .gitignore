@@ -535,4 +535,6 @@ ServerConfig.vdf
 !src/lib/common/x64/2015/
 !src/lib/common/x64/2015/release/
 !src/lib/common/x64/2015/release/giflib.lib
+
+compile_commands.json
 #-- end AS

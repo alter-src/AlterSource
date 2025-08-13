@@ -14,6 +14,9 @@
 #include "hl2_playerlocaldata.h"
 #include "simtimer.h"
 #include "soundenvelope.h"
+#ifdef AS_DLL
+#include "basemultiplayerplayer.h"
+#endif // AS_DLL
 
 class CAI_Squad;
 class CPropCombineBall;
@@ -75,10 +78,17 @@ public:
 //=============================================================================
 // >> HL2_PLAYER
 //=============================================================================
+#ifdef AS_DLL
+class CHL2_Player : public CBaseMultiplayerPlayer
+{
+public:
+	DECLARE_CLASS( CHL2_Player, CBaseMultiplayerPlayer );
+#else
 class CHL2_Player : public CBasePlayer
 {
 public:
 	DECLARE_CLASS( CHL2_Player, CBasePlayer );
+#endif // AS_DLL
 
 	CHL2_Player();
 	~CHL2_Player( void );

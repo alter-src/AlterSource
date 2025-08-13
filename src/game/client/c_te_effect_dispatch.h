@@ -43,5 +43,8 @@ public:
 void DispatchEffectToCallback( const char *pEffectName, const CEffectData &m_EffectData );
 void DispatchEffect( const char *pName, const CEffectData &data );
 void DispatchEffect( const char *pName, const CEffectData &data, C_RecipientFilter &filter );
+#ifdef AS_DLL
+void DispatchEffect( const char *pName, const CEffectData &data, IRecipientFilter &filter );
+#endif // AS_DLL
 
 #endif // C_TE_EFFECT_DISPATCH_H

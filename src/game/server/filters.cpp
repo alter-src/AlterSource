@@ -372,7 +372,12 @@ protected:
 
 	bool PassesDamageFilterImpl(const CTakeDamageInfo &info)
 	{
-	 	return info.GetDamageType() == m_iDamageType;
+#ifndef AS_DLL
+		return info.GetDamageType() == m_iDamageType;
+#else
+		//Tony; these are bitflags. check them as so.
+		return ((info.GetDamageType() & m_iDamageType) == m_iDamageType);
+#endif // AS_DLL
 	}
 
 	int m_iDamageType;

@@ -39,6 +39,10 @@ ConVar hl2mp_spawn_frag_fallback_radius( "hl2mp_spawn_frag_fallback_radius", "48
 
 #define HL2MP_COMMAND_MAX_RATE 0.3
 
+#ifdef AS_DLL
+#define CYCLELATCH_UPDATE_INTERVAL	0.2f
+#endif // AS_DLL
+
 void DropPrimedFragGrenade( CHL2MP_Player *pPlayer, CBaseCombatWeapon *pGrenade );
 
 LINK_ENTITY_TO_CLASS( player, CHL2MP_Player );
@@ -65,6 +69,12 @@ BEGIN_SEND_TABLE_NOBASE( CHL2MP_Player, DT_HL2MPNonLocalPlayerExclusive )
 
 	SendPropFloat( SENDINFO_VECTORELEM(m_angEyeAngles, 0), 8, SPROP_CHANGES_OFTEN, -90.0f, 90.0f ),
 	SendPropAngle( SENDINFO_VECTORELEM(m_angEyeAngles, 1), 10, SPROP_CHANGES_OFTEN ),
+
+#ifdef AS_DLL
+	// Only need to latch cycle for other players
+	// If you increase the number of bits networked, make sure to also modify the code below and in the client class.
+	SendPropInt( SENDINFO( m_cycleLatch ), 4, SPROP_UNSIGNED ),
+#endif // AS_DLL
 
 END_SEND_TABLE()
 
@@ -153,6 +163,11 @@ CHL2MP_Player::CHL2MP_Player() : m_PlayerAnimState( this )
 
     m_bEnterObserver = false;
 	m_bReady = false;
+
+#ifdef AS_DLL
+	m_cycleLatch = 0;
+	m_cycleLatchTimer.Invalidate();
+#endif // AS_DLL
 
 	BaseClass::ChangeTeam( 0 );
 	
@@ -376,6 +391,10 @@ void CHL2MP_Player::Spawn(void)
 	SetPlayerUnderwater(false);
 
 	m_bReady = false;
+
+#ifdef AS_DLL
+	m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+#endif // AS_DLL
 }
 
 bool CHL2MP_Player::ValidatePlayerModel( const char *pModel )
@@ -632,6 +651,15 @@ void CHL2MP_Player::PostThink( void )
 	QAngle angles = GetLocalAngles();
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
+
+#ifdef AS_DLL
+	if ( IsAlive() && m_cycleLatchTimer.IsElapsed() )
+	{
+		m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
+		// Compress the cycle into 4 bits. Can represent 0.0625 in steps which is enough.
+		m_cycleLatch.GetForModify() = 16 * GetCycle();
+	}
+#endif // AS_DLL
 }
 
 void CHL2MP_Player::PlayerDeathThink()

@@ -184,6 +184,13 @@ void DispatchEffect( const char *pName, const CEffectData &data, C_RecipientFilt
 	te->DispatchEffect( filter, 0.0, data.m_vOrigin, pName, data );
 }
 
+#ifdef AS_DLL
+void DispatchEffect( const char *pName, const CEffectData &data, IRecipientFilter &filter )
+{
+	te->DispatchEffect( filter, 0.0, data.m_vOrigin, pName, data );
+}
+#endif // AS_DLL
+
 //-----------------------------------------------------------------------------
 // Playback
 //-----------------------------------------------------------------------------

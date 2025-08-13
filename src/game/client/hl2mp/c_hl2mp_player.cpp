@@ -20,6 +20,10 @@
 #undef CHL2MP_Player	
 #endif
 
+#ifdef AS_DLL
+#define CYCLELATCH_TOLERANCE		0.15f
+#endif // AS_DLL
+
 // misyl: Can be set to Msg if you want some info for debugging prediction
 #define MsgPredTest(...)
 #define MsgPredTest2(...)
@@ -44,6 +48,10 @@ BEGIN_RECV_TABLE_NOBASE( C_HL2MP_Player, DT_HL2MPNonLocalPlayerExclusive )
 
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
+
+#ifdef AS_DLL
+	RecvPropInt( RECVINFO( m_cycleLatch ), 0, &C_HL2MP_Player::RecvProxy_CycleLatch ),
+#endif // AS_DLL
 END_RECV_TABLE()
 
 IMPLEMENT_CLIENTCLASS_DT(C_HL2MP_Player, DT_HL2MP_Player, CHL2MP_Player)
@@ -113,6 +121,10 @@ C_HL2MP_Player::C_HL2MP_Player() : m_PlayerAnimState( this ), m_iv_angEyeAngles(
 	m_blinkTimer.Invalidate();
 
 	m_pFlashlightBeam = NULL;
+
+#ifdef AS_DLL
+	m_flServerCycle = -1.0f;
+#endif // AS_DLL
 
 	SuitPower_Initialize();
 }
@@ -394,6 +406,20 @@ const QAngle &C_HL2MP_Player::EyeAngles()
 		return m_angEyeAngles;
 	}
 }
+
+#ifdef AS_DLL
+void C_HL2MP_Player::RecvProxy_CycleLatch( const CRecvProxyData *pData, void *pStruct, void *pOut )
+{
+	C_HL2MP_Player* pPlayer = static_cast<C_HL2MP_Player*>( pStruct );
+
+	float flServerCycle = (float)pData->m_Value.m_Int / 16.0f;
+	float flCurCycle = pPlayer->GetCycle();
+
+	// The cycle is way out of sync.
+	if ( fabs( flCurCycle - flServerCycle ) > CYCLELATCH_TOLERANCE )
+		pPlayer->SetServerIntendedCycle( flServerCycle );
+}
+#endif // AS_DLL
 
 //-----------------------------------------------------------------------------
 // Charge battery fully, turn off all devices.

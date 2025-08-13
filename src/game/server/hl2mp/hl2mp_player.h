@@ -168,6 +168,11 @@ private:
 
     bool m_bEnterObserver;
 	bool m_bReady;
+
+#ifdef AS_DLL
+	CNetworkVar( int, m_cycleLatch ); // Network the cycle to clients periodically
+	CountdownTimer m_cycleLatchTimer;
+#endif // AS_DLL
 };
 
 inline CHL2MP_Player *ToHL2MPPlayer( CBaseEntity *pEntity )
