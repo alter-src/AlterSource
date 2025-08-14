@@ -45,6 +45,7 @@ $Project "Client (Alter)"
 			$File	"altersrc\fx_cs_weaponfx.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
+			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"
 		}
 
 		$Folder	"HL2 DLL"

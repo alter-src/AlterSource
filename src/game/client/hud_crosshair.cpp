@@ -294,7 +294,11 @@ void CHudCrosshair::SetCrosshairAngle( const QAngle& angle )
 void CHudCrosshair::SetCrosshair( CHudTexture *texture, const Color& clr )
 {
 	m_pCrosshair = texture;
+#ifdef AS_DLL
+	m_clrCrosshair = Color( 255, 255, 255, 255 );
+#else
 	m_clrCrosshair = clr;
+#endif
 }
 
 //-----------------------------------------------------------------------------

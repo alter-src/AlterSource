@@ -421,6 +421,14 @@ BEGIN_DATADESC( CBasePlayer )
 	// DEFINE_FIELD( m_SimulatedByThisPlayer, CUtlVector < CHandle < CBaseEntity > > ),
 #endif
 
+#if defined( AS_DLL )
+	// adnan
+	// set the use angles
+	// set when the player presses use
+	DEFINE_FIELD( m_vecUseAngles, FIELD_VECTOR ),
+	// end adnan
+#endif // AS_DLL
+
 	DEFINE_FIELD( m_flOldPlayerZ, FIELD_FLOAT ),
 	DEFINE_FIELD( m_flOldPlayerViewOffsetZ, FIELD_FLOAT ),
 	DEFINE_FIELD( m_bPlayerUnderwater, FIELD_BOOLEAN ),
@@ -8152,6 +8160,14 @@ void CMovementSpeedMod::InputSpeedMod(inputdata_t &data)
 		SendPropFloat		( SENDINFO( m_flConstraintRadius ), 0, SPROP_NOSCALE ),
 		SendPropFloat		( SENDINFO( m_flConstraintWidth ), 0, SPROP_NOSCALE ),
 		SendPropFloat		( SENDINFO( m_flConstraintSpeedFactor ), 0, SPROP_NOSCALE ),
+
+#ifdef AS_DLL
+		// adnan
+		// send the use angles
+		// set when the player presses use
+		SendPropVector		( SENDINFO( m_vecUseAngles ), 0, SPROP_NOSCALE ),
+		// end adnan
+#endif // AS_DLL
 
 		SendPropFloat		( SENDINFO( m_flDeathTime ), 0, SPROP_NOSCALE ),
 

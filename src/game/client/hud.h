@@ -173,6 +173,9 @@ public:
 public:
 
 	int							m_iKeyBits;
+#ifdef AS_DLL
+	bool						m_bSkipClear;
+#endif // AS_DLL
 #ifndef _XBOX
 	float						m_flMouseSensitivity;
 	float						m_flMouseSensitivityFactor;

@@ -251,11 +251,14 @@ void CHL2MP_Player::GiveAllItems( void )
 	GiveNamedItem( "weapon_slam" );
 
 	GiveNamedItem( "weapon_physcannon" );
-	
+#ifdef AS_DLL
+	GiveNamedItem( "weapon_physgun" );
+#endif // AS_DLL
 }
 
 void CHL2MP_Player::GiveDefaultItems( void )
 {
+#ifndef AS_DLL
 	EquipSuit();
 
 	CBasePlayer::GiveAmmo( 255,	"Pistol");
@@ -290,6 +293,10 @@ void CHL2MP_Player::GiveDefaultItems( void )
 	{
 		Weapon_Switch( Weapon_OwnsThisType( "weapon_physcannon" ) );
 	}
+#else
+	// TODO: change this when lua gets added
+	GiveAllItems();
+#endif // AS_DLL
 }
 
 void CHL2MP_Player::PickDefaultSpawnTeam( void )
