@@ -150,6 +150,9 @@
 
 #endif
 
+#ifdef AS_DLL
+#include "mountlogic.h"
+#endif // AS_DLL
 
 extern vgui::IInputInternal *g_InputInternal;
 
@@ -1195,6 +1198,10 @@ void CHLClient::PostInit()
 		}
 	}
 #endif
+
+#ifdef AS_DLL
+	LoadGameMounts();
+#endif // AS_DLL
 
 #if !defined( _X360 ) && !defined( NO_STEAM ) && defined( AS_DLL )
 	// This needs to be called every time the game is launched since Steam doesn't save the updated position

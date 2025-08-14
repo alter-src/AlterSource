@@ -112,6 +112,10 @@ extern ConVar tf_mm_servermode;
 #include "NextBotManager.h"
 #endif
 
+#ifdef AS_DLL
+#include "mountlogic.h"
+#endif // AS_DLL
+
 #ifdef USES_ECON_ITEMS
 #include "econ_item_system.h"
 #endif // USES_ECON_ITEMS
@@ -751,6 +755,10 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 void CServerGameDLL::PostInit()
 {
 	IGameSystem::PostInitAllSystems();
+
+#ifdef AS_DLL
+	LoadGameMounts();
+#endif // AS_DLL
 }
 
 void CServerGameDLL::DLLShutdown( void )

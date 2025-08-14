@@ -60,6 +60,12 @@ $Project "Server (HL2MP)"
 		$File   "$SRCDIR\game\shared\teamplay_round_timer.cpp"
 		$File   "$SRCDIR\game\shared\teamplay_round_timer.h"
 
+		$Folder "Alter DLL"
+		{
+			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
+			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
+		}
+
 		$Folder "NextBot"
 		{
 			$File	"NextBot\NextBot.cpp"

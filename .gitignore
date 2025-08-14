@@ -537,4 +537,9 @@ ServerConfig.vdf
 !src/lib/common/x64/2015/release/giflib.lib
 
 compile_commands.json
+mount.txt
+
+# ThePixelMoon: why would anyone need this, its just decompiled models and stuff
+modelsrc/
+
 #-- end AS
