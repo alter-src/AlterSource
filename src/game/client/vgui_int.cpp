@@ -23,6 +23,10 @@
 #include <KeyValues.h>
 #include "filesystem.h"
 #include "matsys_controls/matsyscontrols.h"
+#ifdef AS_DLL
+#include <vgui_controls/Controls.h>
+#include "vgui_soundscape_maker.h"
+#endif // AS_DLL
 
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
@@ -200,6 +204,9 @@ void VGui_CreateGlobalPanels( void )
 #if defined( TRACK_BLOCKING_IO )
 	VPANEL gameDLLPanel = enginevgui->GetPanel( PANEL_GAMEDLL );
 #endif
+#ifdef AS_DLL
+	g_SoundscapeMaker->Create( toolParent );
+#endif // AS_DLL
 	// Part of game
 	internalCenterPrint->Create( gameToolParent );
 	loadingdisc->Create( gameToolParent );
@@ -225,6 +232,10 @@ void VGui_CreateGlobalPanels( void )
 void VGui_Shutdown()
 {
 	VGUI_DestroyClientDLLRootPanel();
+
+#ifdef AS_DLL
+	g_SoundscapeMaker->Destroy();
+#endif // AS_DLL
 
 #ifndef _X360
 	MP3Player_Destroy();

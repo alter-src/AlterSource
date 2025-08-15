@@ -29,6 +29,9 @@
 //-----------------------------------------------------------------------------
 vgui::HScheme g_hVGuiCombineScheme = 0;
 
+#ifdef AS_DLL
+ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 20.0, true, MAX_FOV );
+#endif // AS_DLL
 
 // Instance the singleton and expose the interface to it.
 IClientMode *GetClientModeNormal()

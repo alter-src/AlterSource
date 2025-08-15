@@ -99,7 +99,11 @@ ConVar player_showpredictedposition_timestep( "player_showpredictedposition_time
 ConVar player_squad_transient_commands( "player_squad_transient_commands", "1", FCVAR_REPLICATED );
 ConVar player_squad_double_tap_time( "player_squad_double_tap_time", "0.25" );
 
+#ifdef AS_DLL
+ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "1", FCVAR_CHEAT );
+#else
 ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT );
+#endif // AS_DLL
 
 ConVar autoaim_unlock_target( "autoaim_unlock_target", "0.8666" );
 
@@ -920,6 +924,12 @@ void CHL2_Player::PreThink(void)
 
 	// Update weapon's ready status
 	UpdateWeaponPosture();
+
+#ifdef AS_DLL
+	// If we're in VGUI mode we should avoid shooting
+	if ( GetVGUIMode() )
+		m_nButtons &= ~(IN_ATTACK|IN_ATTACK2);
+#endif // AS_DLL
 
 	// Disallow shooting while zooming
 	if ( IsX360() )
@@ -2969,6 +2979,19 @@ void CHL2_Player::UpdateWeaponPosture( void )
 		UTIL_TraceLine( EyePosition(), EyePosition() + vecAim * CHECK_FRIENDLY_RANGE, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
 
 		CBaseEntity *aimTarget = tr.m_pEnt;
+
+#ifdef AS_DLL
+		if ( GetVGUIMode() )
+		{
+			//We're over a friendly, drop our weapon
+			if ( Weapon_Lower() == false )
+			{
+				//FIXME: We couldn't lower our weapon!
+			}
+
+			return;
+		}
+#endif // AS_DLL
 
 		//If we're over something
 		if (  aimTarget && !tr.DidHitWorld() )

@@ -55,6 +55,15 @@ public:
 
 	virtual bool	PlayFleshyHittySoundOnHit() const { return false; }
 
+#ifdef AS_DLL
+#ifndef CLIENT_DLL
+	virtual int CapabilitiesGet()
+	{ 
+		return bits_CAP_WEAPON_MELEE_ATTACK1; 
+	}
+#endif
+#endif // AS_DLL
+
 protected:
 	virtual	void	ImpactEffect( trace_t &trace );
 

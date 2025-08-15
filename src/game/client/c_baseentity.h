@@ -229,6 +229,11 @@ public:
 
 	void							Interp_SetupMappings( VarMapping_t *map );
 	
+#ifdef AS_DLL
+	const char* GetEntityName();
+	char m_iName[MAX_PATH];
+#endif // AS_DLL
+
 	// Returns 1 if there are no more changes (ie: we could call RemoveFromInterpolationList).
 	int								Interp_Interpolate( VarMapping_t *map, float currentTime );
 	
@@ -2217,6 +2222,13 @@ inline bool C_BaseEntity::ShouldRecordInTools() const
 	return true;
 #endif
 }
+
+#ifdef AS_DLL
+inline const char *C_BaseEntity::GetEntityName() 
+{ 
+	return m_iName; 
+}
+#endif // AS_DLL
 
 C_BaseEntity *CreateEntityByName( const char *className );
 

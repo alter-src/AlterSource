@@ -286,6 +286,10 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CBaseEntity, DT_BaseEntity )
 	SendPropEHandle (SENDINFO_NAME(m_hMoveParent, moveparent)),
 	SendPropInt		(SENDINFO(m_iParentAttachment), NUM_PARENTATTACHMENT_BITS, SPROP_UNSIGNED),
 
+#ifdef AS_DLL
+	SendPropStringT( SENDINFO( m_iName ) ),
+#endif // AS_DLL
+
 	SendPropInt		(SENDINFO_NAME( m_MoveType, movetype ), MOVETYPE_MAX_BITS, SPROP_UNSIGNED ),
 	SendPropInt		(SENDINFO_NAME( m_MoveCollide, movecollide ), MOVECOLLIDE_MAX_BITS, SPROP_UNSIGNED ),
 #if PREDICTION_ERROR_CHECK_LEVEL > 1 
@@ -2489,10 +2493,17 @@ void CBaseEntity::UpdateOnRemove( void )
 	// we need to do this now since we will set the name to nothing later
 	if( m_bForcePurgeFixedupStrings )
 	{	
+#ifdef AS_DLL
+		if( m_iName.Get() != NULL_STRING )	
+		{
+			RemovePooledString( STRING( m_iName.Get() ) );
+		}
+#else
 		if( m_iName != NULL_STRING )	
 		{
 			RemovePooledString( STRING( m_iName ) );
 		}
+#endif // AS_DLL
 
 		if( m_iszScriptId != NULL_STRING )	
 		{
@@ -4201,10 +4212,17 @@ const char *CBaseEntity::GetDebugName(void)
 	if ( this == NULL )
 		return "<<null>>";
 
+#ifdef AS_DLL
+	if ( m_iName.Get() != NULL_STRING ) 
+	{
+		return STRING(m_iName.Get());
+	}
+#else
 	if ( m_iName != NULL_STRING ) 
 	{
 		return STRING(m_iName);
 	}
+#endif // AS_DLL
 	else
 	{
 		return STRING(m_iClassname);
@@ -4384,7 +4402,11 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 					// mapper debug message
 					if (pCaller != NULL)
 					{
+#ifdef AS_DLL
+						Q_snprintf( szBuffer, sizeof(szBuffer), "(%0.2f) input %s: %s.%s(%s)\n", gpGlobals->curtime, STRING(pCaller->m_iName.Get()), GetDebugName(), szInputName, Value.String() );
+#else
 						Q_snprintf( szBuffer, sizeof(szBuffer), "(%0.2f) input %s: %s.%s(%s)\n", gpGlobals->curtime, STRING(pCaller->m_iName), GetDebugName(), szInputName, Value.String() );
+#endif // AS_DLL
 					}
 					else
 					{
@@ -4409,7 +4431,11 @@ bool CBaseEntity::AcceptInput( const char *szInputName, CBaseEntity *pActivator,
 								Warning( "!! ERROR: bad input/output link:\n!! %s(%s,%s) doesn't match type from %s(%s)\n", 
 									STRING(m_iClassname), GetDebugName(), szInputName, 
 									( pCaller != NULL ) ? STRING(pCaller->m_iClassname) : "<null>",
+#ifdef AS_DLL
+									( pCaller != NULL ) ? STRING(pCaller->m_iName.Get()) : "<null>" );
+#else
 									( pCaller != NULL ) ? STRING(pCaller->m_iName) : "<null>" );
+#endif // AS_DLL
 								return false;
 							}
 						}
@@ -8277,7 +8303,11 @@ HSCRIPT CBaseEntity::GetScriptInstance()
 		if ( m_iszScriptId == NULL_STRING )
 		{
 			char *szName = (char *)stackalloc( 1024 );
+#ifdef AS_DLL
+			g_pScriptVM->GenerateUniqueKey( ( m_iName.Get() != NULL_STRING ) ? STRING(GetEntityName()) : GetClassname(), szName, 1024 );
+#else
 			g_pScriptVM->GenerateUniqueKey( ( m_iName != NULL_STRING ) ? STRING(GetEntityName()) : GetClassname(), szName, 1024 );
+#endif // AS_DLL
 			m_iszScriptId = AllocPooledString( szName );
 		}
 

@@ -618,7 +618,11 @@ CBaseEntity *CGlobalEntityList::FindEntityByName( CBaseEntity *pStartEntity, con
 			continue;
 		}
 
+#ifdef AS_DLL
+		if ( !ent->m_iName.Get() )
+#else
 		if ( !ent->m_iName )
+#endif // AS_DLL
 			continue;
 
 		if ( ent->NameMatches( szName ) )

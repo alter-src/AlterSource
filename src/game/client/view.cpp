@@ -67,6 +67,9 @@ void ToolFramework_AdjustEngineViewport( int& x, int& y, int& width, int& height
 bool ToolFramework_SetupEngineView( Vector &origin, QAngle &angles, float &fov );
 bool ToolFramework_SetupEngineMicrophone( Vector &origin, QAngle &angles );
 
+#ifdef AS_DLL
+ConVar cl_camera_anim_intensity("cl_camera_anim_intensity", "1.0", FCVAR_ARCHIVE, "Intensity of cambone animations");
+#endif // AS_DLL
 
 extern ConVar default_fov;
 extern bool g_bRenderingScreenshot;
@@ -86,7 +89,7 @@ extern ConVar sensitivity;
 ConVar zoom_sensitivity_ratio( "zoom_sensitivity_ratio", "1.0", FCVAR_ARCHIVE, "Additional mouse sensitivity scale factor applied when FOV is zoomed in." );
 
 CViewRender g_DefaultViewRender;
-IViewRender *view = NULL;	// set in cldll_client_init.cpp if no mod creates their own
+IViewRender *view = NULL;	// set in cdll_client_int.cpp if no mod creates their own
 
 bool g_bRenderingCameraView = false;
 
@@ -1179,6 +1182,41 @@ void CViewRender::Render( vrect_t *rect )
 			    }
 		    }
 	    }
+
+#ifdef AS_DLL
+		//--------------------------------
+		// Handle camera anims
+		//--------------------------------
+		if (!UseVR() && pPlayer && cl_camera_anim_intensity.GetFloat() > 0)
+		{
+			if (pPlayer->GetViewModel(0))
+			{
+				int attachment = pPlayer->GetViewModel(0)->LookupAttachment("camera");
+				if (attachment != -1)
+				{
+					int rootBone = pPlayer->GetViewModel(0)->LookupAttachment("camera_root");
+					Vector cameraOrigin = Vector(0, 0, 0);
+					QAngle cameraAngles = QAngle(0, 0, 0);
+					Vector rootOrigin = Vector(0, 0, 0);
+					QAngle rootAngles = QAngle(0, 0, 0);
+
+					pPlayer->GetViewModel(0)->GetAttachmentLocal(attachment, cameraOrigin, cameraAngles);
+					if (rootBone != -1)
+					{
+						pPlayer->GetViewModel(0)->GetAttachmentLocal(rootBone, rootOrigin, rootAngles);
+						cameraOrigin -= rootOrigin;
+						cameraAngles -= rootAngles;
+
+						// ThePixelMoon: spam lore
+						//DevMsg("camera attachment found\n");
+					}
+
+					m_View.angles += cameraAngles * cl_camera_anim_intensity.GetFloat();
+					m_View.origin += cameraOrigin * cl_camera_anim_intensity.GetFloat();
+				}
+			}
+		}
+#endif // AS_DLL
 
 	    // Determine if we should draw view model ( client mode override )
 	    bool drawViewModel = g_pClientMode->ShouldDrawViewModel();

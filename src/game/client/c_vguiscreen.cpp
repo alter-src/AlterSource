@@ -42,6 +42,10 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectVGuiScreen )
 CLIENTEFFECT_MATERIAL( "engine/writez" )
 CLIENTEFFECT_REGISTER_END()
 
+#ifdef AS_DLL
+CUtlVector<C_VGuiScreen*> g_pVGUIScreens;
+#endif // AS_DLL
+
 IMPLEMENT_CLIENTCLASS_DT(C_VGuiScreen, DT_VGuiScreen, CVGuiScreen)
 	RecvPropFloat( RECVINFO(m_flWidth) ),
 	RecvPropFloat( RECVINFO(m_flHeight) ),
@@ -67,11 +71,19 @@ C_VGuiScreen::C_VGuiScreen()
 
 	m_WriteZMaterial.Init( "engine/writez", TEXTURE_GROUP_VGUI );
 	m_OverlayMaterial.Init( m_WriteZMaterial );
+
+#ifdef AS_DLL
+	g_pVGUIScreens.AddToTail( this );
+#endif // AS_DLL
 }
 
 C_VGuiScreen::~C_VGuiScreen()
 {
 	DestroyVguiScreen();
+
+#ifdef AS_DLL
+	g_pVGUIScreens.FindAndRemove( this );
+#endif // AS_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -643,6 +655,99 @@ C_VGuiScreen *CVGuiScreenEnumerator::GetVGuiScreen( int index )
 // Look for vgui screens, returns true if it found one ...
 //
 //-----------------------------------------------------------------------------
+#ifdef AS_DLL
+C_BaseEntity *FindNearbyVguiScreen( const Vector &viewPosition, const QAngle &viewAngle, int nTeam )
+{
+	if ( IsX360() )
+	{
+		// X360TBD: Turn this on if feature actually used
+		return NULL;
+	}
+
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+
+	Assert( pLocalPlayer );
+
+	if ( !pLocalPlayer )
+		return NULL;
+
+	// Get the view direction...
+	Vector lookDir;
+	AngleVectors( viewAngle, &lookDir );
+
+	// Create a ray used for raytracing 
+	Vector lookEnd;
+	VectorMA( viewPosition, 2.0f * VGUI_SCREEN_MODE_RADIUS, lookDir, lookEnd );
+
+	Ray_t lookRay;
+	lookRay.Init( viewPosition, lookEnd );
+
+	
+	Vector vecOut, vecViewDelta;
+
+	float flBestDist = 2.0f;
+	C_VGuiScreen *pBestScreen = NULL;
+	
+	
+	for (int i = 0; i < g_pVGUIScreens.Count(); i++)
+	{
+		if (g_pVGUIScreens.IsValidIndex(i))
+		{
+			C_VGuiScreen *pScreen = g_pVGUIScreens[i];
+		
+			if ( pScreen->IsAttachedToViewModel() )
+				continue;
+
+			// Don't bother with screens I'm behind...
+			// Hax - don't cancel backfacing with viewmodel attached screens.
+			// we can get prediction bugs that make us backfacing for one frame and
+			// it resets the mouse position if we lose focus.
+			if ( pScreen->IsBackfacing(viewPosition) )
+				continue;
+
+			// Don't bother with screens that are turned off
+			if (!pScreen->IsActive())
+				continue;
+
+			// FIXME: Should this maybe go into a derived class of some sort?
+			// Don't bother with screens on the wrong team
+			if (!pScreen->IsVisibleToTeam(nTeam))
+				continue;
+
+			if ( !pScreen->AcceptsInput() )
+				continue;
+
+			if ( pScreen->IsInputOnlyToOwner() && pScreen->GetPlayerOwner() != pLocalPlayer )
+				continue;
+
+			// Test perpendicular distance from the screen...
+			pScreen->GetVectors( NULL, NULL, &vecOut );
+			VectorSubtract( viewPosition, pScreen->GetAbsOrigin(), vecViewDelta );
+			float flPerpDist = DotProduct(vecViewDelta, vecOut);
+			if ( (flPerpDist < 0) || (flPerpDist > VGUI_SCREEN_MODE_RADIUS) )
+				continue;
+
+			// Perform a raycast to see where in barycentric coordinates the ray hits
+			// the viewscreen; if it doesn't hit it, you're not in the mode
+			float u, v, t;
+			if (!pScreen->IntersectWithRay( lookRay, &u, &v, &t ))
+				continue;
+
+			// Barycentric test
+			if ((u < 0) || (v < 0) || (u > 1) || (v > 1))
+				continue;
+
+			if ( t < flBestDist )
+			{
+				flBestDist = t;
+				pBestScreen = pScreen;
+			}
+		}
+	}
+	
+	return pBestScreen;
+}
+#else
 C_BaseEntity *FindNearbyVguiScreen( const Vector &viewPosition, const QAngle &viewAngle, int nTeam )
 {
 	if ( IsX360() )
@@ -732,6 +837,7 @@ C_BaseEntity *FindNearbyVguiScreen( const Vector &viewPosition, const QAngle &vi
 	
 	return pBestScreen;
 }
+#endif // AS_DLL
 
 void ActivateVguiScreen( C_BaseEntity *pVguiScreenEnt )
 {

@@ -64,6 +64,9 @@ public:
 
 #ifndef CLIENT_DLL
 	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+#ifdef AS_DLL
+	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
+#endif // AS_DLL
 #endif
 
 	void	ThrowGrenade( CBasePlayer *pPlayer );
@@ -99,6 +102,10 @@ acttable_t	CWeaponFrag::m_acttable[] =
 	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,	false },
 	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
 	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_GRENADE,					false },
+
+#ifdef AS_DLL
+	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SLAM, true },
+#endif // AS_DLL
 };
 
 IMPLEMENT_ACTTABLE(CWeaponFrag);

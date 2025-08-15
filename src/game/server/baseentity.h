@@ -1819,7 +1819,11 @@ private:
 	// was pev->flags
 	CNetworkVarForDerived( int, m_fFlags );
 
+#ifndef AS_DLL
 	string_t m_iName;	// name used to identify this entity
+#else
+	CNetworkVar( string_t, m_iName ); // name used to identify this entity
+#endif // AS_DLL
 
 	// Damage modifiers
 	friend class CDamageModifier;
@@ -2169,17 +2173,30 @@ inline string_t CBaseEntity::GetEntityName()
 
 inline const char *CBaseEntity::GetEntityNameAsCStr()
 {
+#ifndef AS_DLL
 	return STRING( m_iName );
+#else
+	return STRING( m_iName.Get() );
+#endif // AS_DLL
 }
 
 inline const char *CBaseEntity::GetPreTemplateName()
 {
+#ifndef AS_DLL
 	const char *pszDelimiter = V_strrchr( STRING( m_iName ), '&' );
 	if ( !pszDelimiter )
 		return STRING( m_iName );
 	static char szStrippedName[128];
 	V_strncpy( szStrippedName, STRING( m_iName ), MIN( (intp)(ARRAYSIZE(szStrippedName)), (intp)(pszDelimiter - STRING( m_iName ) + 1 )) );
 	return szStrippedName;
+#else
+	const char *pszDelimiter = V_strrchr( STRING(m_iName.Get()), '&' );
+	if ( !pszDelimiter )
+		return STRING( m_iName.Get() );
+	static char szStrippedName[128];
+	V_strncpy( szStrippedName, STRING( m_iName.Get() ), MIN( ARRAYSIZE(szStrippedName), pszDelimiter - STRING( m_iName.Get() ) + 1 ) );
+	return szStrippedName;
+#endif // AS_DLL
 }
 
 inline void CBaseEntity::SetName( string_t newName )

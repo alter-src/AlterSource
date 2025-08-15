@@ -152,6 +152,7 @@
 
 #ifdef AS_DLL
 #include "mountlogic.h"
+#include "basemenu.h"
 #endif // AS_DLL
 
 extern vgui::IInputInternal *g_InputInternal;
@@ -223,6 +224,10 @@ IReplaySystem *g_pReplay = NULL;
 #endif
 
 IHaptics* haptics = NULL;// NVNT haptics system interface singleton
+
+#ifdef AS_DLL
+RootPanel          	*IBaseMenu;
+#endif // AS_DLL
 
 //=============================================================================
 // HPE_BEGIN
@@ -910,6 +915,16 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	if ( cl_no_texture_stream.GetBool() && !CommandLine()->CheckParm( "-no_texture_stream" ) )
 	{
 		CommandLine()->AppendParm( "-no_texture_stream", NULL );
+	}
+
+	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
+	{
+		if ( !IBaseMenu )
+		{
+			OverrideUI->Create( NULL );
+			IBaseMenu = OverrideUI->GetMenuBase();
+			OverrideRootUI();
+		}
 	}
 #endif // AS_DLL
 
@@ -1709,6 +1724,13 @@ void CHLClient::LevelInitPostEntity( )
 	IGameSystem::LevelInitPostEntityAllSystems();
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
+
+#ifdef AS_DLL
+	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
+	{
+		IBaseMenu->Refresh();
+	}
+#endif // AS_DLL
 }
 
 //-----------------------------------------------------------------------------
@@ -1791,6 +1813,13 @@ void CHLClient::LevelShutdown( void )
 #ifdef _XBOX
 	ReleaseRenderTargets();
 #endif
+
+#ifdef AS_DLL
+	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
+	{
+		IBaseMenu->Refresh();
+	}
+#endif // AS_DLL
 
 	// string tables are cleared on disconnect from a server, so reset our global pointers to NULL
 	ResetStringTablePointers();

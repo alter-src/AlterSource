@@ -28,7 +28,11 @@
 #define MsgPredTest(...)
 #define MsgPredTest2(...)
 
+#ifdef AS_DLL
+ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "1", FCVAR_CHEAT | FCVAR_REPLICATED );
+#else
 ConVar sv_infinite_aux_power( "sv_infinite_aux_power", "0", FCVAR_CHEAT | FCVAR_REPLICATED );
+#endif // AS_DLL
 
 LINK_ENTITY_TO_CLASS( player, C_HL2MP_Player );
 

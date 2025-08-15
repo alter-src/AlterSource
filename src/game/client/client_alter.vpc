@@ -13,7 +13,7 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories		"$BASE;hl2mp\ui,.\hl2mp,$SRCDIR\game\shared\hl2mp,.\hl2,.\hl2\elements,$SRCDIR\game\shared\hl2,$SRCDIR\game\shared\altersrc,.\altersrc"
+		$AdditionalIncludeDirectories		"$BASE;hl2mp\ui,.\hl2mp,$SRCDIR\game\shared\hl2mp,.\hl2,.\hl2\elements,$SRCDIR\game\shared\hl2,$SRCDIR\game\shared\altersrc,.\altersrc,$SRCDIR\thirdparty\ultralight\include"
 		$PreprocessorDefinitions			"$BASE;HL2MP;HL2_CLIENT_DLL;NEXT_BOT;AS_DLL"
 	}
 }
@@ -43,6 +43,13 @@ $Project "Client (Alter)"
 		$Folder "Alter DLL"
 		{
 			$File	"altersrc\fx_cs_weaponfx.cpp"
+			$File	"altersrc\basemenu.cpp"
+			$File	"altersrc\basemenu.h"
+			$File	"altersrc\vgui_movie_display.cpp"
+			$File	"altersrc\c_movie_display.cpp"
+			$File	"altersrc\c_movie_display.h"
+			$File	"altersrc\vgui_soundscape_maker.cpp"
+			$File	"altersrc\vgui_soundscape_maker.h"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
 			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"

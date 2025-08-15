@@ -93,6 +93,9 @@ public:
 	// end adnan
 #endif // AS_DLL
 	virtual void	OverrideMouseInput( float *x, float *y ) = 0;
+#ifdef AS_DLL
+	virtual bool	CreateMove( float flInputSampleTime, CUserCmd *cmd, bool bVguiUpdate ) = 0;
+#endif // AS_DLL
 	virtual bool	CreateMove( float flInputSampleTime, CUserCmd *cmd ) = 0;
 
 	virtual void	LevelInit( const char *newmap ) = 0;

@@ -946,8 +946,10 @@ CON_COMMAND( fov, "Change players FOV" )
 //------------------------------------------------------------------------------
 void CC_Player_SetModel( const CCommand &args )
 {
+#ifndef AS_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif // AS_DLL
 
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() );
 	if ( pPlayer && args.ArgC() == 2)
@@ -1251,8 +1253,10 @@ void CC_God_f (void)
 		   return;
    }
 #else
+#ifndef AS_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif // AS_DLL
 #endif
 
 	pPlayer->ToggleFlag( FL_GODMODE );
@@ -1420,8 +1424,10 @@ void CC_Notarget_f (void)
 	if ( !pPlayer )
 		return;
 
+#ifndef AS_DLL
 	if ( gpGlobals->deathmatch )
 		return;
+#endif // AS_DLL
 
 	pPlayer->ToggleFlag( FL_NOTARGET );
 	if ( !(pPlayer->GetFlags() & FL_NOTARGET ) )

@@ -265,7 +265,7 @@ public:
 
 	KeyValues* CreateKey( const char *keyName );
 
-private:
+public:
 	KeyValues( KeyValues& );	// prevent copy constructor being used
 
 	// prevent delete being called except through deleteThis()

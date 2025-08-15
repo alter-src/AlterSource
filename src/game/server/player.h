@@ -252,6 +252,12 @@ public:
 	CBasePlayer();
 	~CBasePlayer();
 
+#ifdef AS_DLL
+	bool		m_pVGUImode;
+	bool		GetVGUIMode(void) {return m_pVGUImode;}
+	void		SetVGUImode(bool newmode) { m_pVGUImode = newmode;}
+#endif // AS_DLL
+
 	// IPlayerInfo passthrough (because we can't do multiple inheritance)
 	IPlayerInfo *GetPlayerInfo() { return &m_PlayerInfo; }
 	IBotController *GetBotController() { return &m_PlayerInfo; }

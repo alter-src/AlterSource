@@ -1073,7 +1073,11 @@ void CInput::ExtraMouseSample( float frametime, bool active )
 	}
 
 	// Let the move manager override anything it wants to.
+#ifdef AS_DLL
+	if ( g_pClientMode->CreateMove( frametime, cmd, true ) )
+#else
 	if ( g_pClientMode->CreateMove( frametime, cmd ) )
+#endif // AS_DLL
 	{
 		// Get current view angles after the client mode tweaks with it
 		engine->SetViewAngles( cmd->viewangles );

@@ -58,6 +58,9 @@ ConVar player_limit_jump_speed( "player_limit_jump_speed", "1", FCVAR_REPLICATED
 // duck controls. Its value is meaningless anytime we don't have the options window open.
 ConVar option_duck_method("option_duck_method", "1", FCVAR_REPLICATED|FCVAR_ARCHIVE );// 0 = HOLD to duck, 1 = Duck is a toggle
 
+#ifdef AS_DLL
+ConVar cl_autojump( "cl_autojump", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO );
+#endif // AS_DLL
 
 // [MD] I'll remove this eventually. For now, I want the ability to A/B the optimizations.
 bool g_bMovementOptimizations = true;
@@ -2412,7 +2415,11 @@ bool CGameMovement::CheckJumpButton( void )
 		return false;
 #endif
 
+#ifdef AS_DLL
+	if ( (mv->m_nOldButtons & IN_JUMP) && !cl_autojump.GetBool() )
+#else
 	if ( mv->m_nOldButtons & IN_JUMP )
+#endif
 		return false;		// don't pogo stick
 
 	// Cannot jump will in the unduck transition.

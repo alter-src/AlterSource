@@ -130,7 +130,11 @@ public:
 	void					SetSuitUpdate(const char *name, int fgroup, int iNoRepeat);
 
 	// Input handling
+#ifndef AS_DLL
 	virtual bool	CreateMove( float flInputSampleTime, CUserCmd *pCmd );
+#else
+	virtual bool 	CreateMove( float flInputSampleTime, CUserCmd *pCmd, bool bVguiUpdate );
+#endif // AS_DLL
 	virtual void	AvoidPhysicsProps( CUserCmd *pCmd );
 	
 	virtual void	PlayerUse( void );

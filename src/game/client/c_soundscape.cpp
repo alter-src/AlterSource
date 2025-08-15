@@ -15,6 +15,17 @@
 #include "view.h"
 #include "engine/ivdebugoverlay.h"
 #include "tier0/icommandline.h"
+#ifdef AS_DLL
+#include "c_soundscape.h"
+
+extern bool g_IsPlayingSoundscape;
+extern bool g_bSSMHack;
+
+//debug stuff
+void SoundscapePrint(Color color, const char* msg, ...);
+void SoundscapeAddLine(Color color, float speed, float width, bool accending);
+int SoundscapeGetLineNum();
+#endif // AS_DLL
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -24,6 +35,8 @@
 #define MAX_SOUNDSCAPE_RECURSION	8
 
 const float DEFAULT_SOUND_RADIUS = 36.0f;
+
+#ifndef AS_DLL
 // Keep an array of all looping sounds so they can be faded in/out
 // OPTIMIZE: Get a handle/pointer to the engine's sound channel instead 
 //			of searching each frame!
@@ -38,11 +51,13 @@ struct loopingsound_t
 	int			id;				// Used to fade out sounds that don't belong to the most current setting
 	bool		isAmbient;		// Ambient sounds have no spatialization - they play from everywhere
 };
+#endif // AS_DLL
 
 ConVar soundscape_fadetime( "soundscape_fadetime", "3.0", FCVAR_CHEAT, "Time to crossfade sound effects between soundscapes" );
 
 #include "interval.h"
 
+#ifndef AS_DLL
 struct randomsound_t
 {
 	Vector		position;
@@ -240,7 +255,7 @@ private:
 	static ConVar *m_pSoundMixerVar;
 
 };
-
+#endif // AS_DLL
 
 // singleton system
 C_SoundscapeSystem g_SoundscapeSystem;
@@ -262,6 +277,10 @@ void Soundscape_OnStopAllSounds()
 // player got a network update
 void Soundscape_Update( audioparams_t &audio )
 {
+#ifdef AS_DLL
+if (g_IsPlayingSoundscape)
+		return;
+#endif // AS_DLL
 	g_SoundscapeSystem.UpdateAudioParams( audio );
 }
 
@@ -580,6 +599,10 @@ void C_SoundscapeSystem::UpdateAudioParams( audioparams_t &audio )
 // Called when a soundscape is activated (leading edge of becoming the active soundscape)
 void C_SoundscapeSystem::StartNewSoundscape( KeyValues *pSoundscape )
 {
+#ifdef AS_DLL
+	if (g_IsPlayingSoundscape && !g_bSSMHack)
+		return;
+#endif // AS_DLL
 	int i;
 
 	// Reset the system
@@ -1083,6 +1106,11 @@ void C_SoundscapeSystem::ProcessPlaySoundscape( KeyValues *pPlaySoundscape, subs
 		if ( pSoundscapeKeys )
 		{
 			StartSubSoundscape( pSoundscapeKeys, subParams );
+
+#ifdef AS_DLL
+			if (g_IsPlayingSoundscape)
+				SoundscapePrint(Color(100, 255, 0, 255), "Playing Sub Soundscape: \"%s\"\n\n", pSoundscapeName);
+#endif // AS_DLL
 		}
 		else
 		{
@@ -1150,6 +1178,41 @@ int C_SoundscapeSystem::AddLoopingSound( const char *pSoundName, bool isAmbient,
 		}
 		soundSlot--;
 	}
+
+#ifdef AS_DLL
+	if (g_IsPlayingSoundscape)
+	{
+		//get index
+		int index = Clamp<int>(SoundscapeGetLineNum(), 0, 6);
+
+		//color for looping sounds
+		static Color LoopingSoundColors[] = {
+			Color(255, 100, 0, 255),
+			Color(255, 255, 0, 255),
+			Color(255, 0, 100, 255),
+			Color(0, 255, 0, 255),
+			Color(0, 255, 255, 255),
+			Color(255, 0, 0, 255),
+			Color(0, 100, 255, 255),
+		};
+
+		SoundscapePrint(LoopingSoundColors[index], "Fading looping sound \"%s\" in. Volume = %f, Pitch = %d\nPosition = {%.2f %.2f %.2f}\n\n", pSoundName, volume, pitch, position.x, position.y, position.z);
+
+		//sound widths
+		static float LoopingSoundsIn[] = {
+			0.4f,
+			0.5f,
+			0.6f,
+			0.7f,
+			0.8f,
+			0.9f,
+			1.0f,
+		};
+
+		//add to graph
+		SoundscapeAddLine(LoopingSoundColors[index], 3 / soundscape_fadetime.GetFloat(), LoopingSoundsIn[index], true);
+	}
+#endif // AS_DLL
 
 	if ( soundSlot < 0 )
 	{
@@ -1239,6 +1302,11 @@ int C_SoundscapeSystem::AddRandomSound( const randomsound_t &sound )
 	int index = m_randomSounds.AddToTail( sound );
 	m_randomSounds[index].nextPlayTime = gpGlobals->curtime + 0.5 * RandomInterval( sound.time );
 	
+#ifdef AS_DLL
+	if (g_IsPlayingSoundscape)
+		SoundscapePrint(Color(100, 255, 255, 255), "Adding random sounds to soundscape system.\nNumber of sounds = \"%d\" For index \"%d\"\n\n", sound.waveCount, index);
+#endif
+
 	return index;
 }
 
@@ -1262,6 +1330,19 @@ void C_SoundscapeSystem::PlayRandomSound( randomsound_t &sound )
 	if ( !pWaveName )
 		return;
 
+#ifdef AS_DLL
+	int pitch = (int)RandomInterval(sound.pitch);
+	float volume = sound.masterVolume * RandomInterval(sound.volume);
+
+	if (sound.isRandom)
+	{
+		sound.position = GenerateRandomSoundPosition();
+	}
+
+	if (g_IsPlayingSoundscape)
+		SoundscapePrint(Color(100, 255, 255, 255), "Playing Random sound \"%s\", Volume = %f, Pitch = %d\nPosition = {%.2f, %.2f, %.2f}\n", pWaveName, volume, pitch, sound.position.x, sound.position.y, sound.position.z);
+#endif // AS_DLL
+
 	if ( sound.isAmbient )
 	{
 		enginesound->EmitAmbientSound( pWaveName, sound.masterVolume * RandomInterval( sound.volume ), (int)RandomInterval( sound.pitch ) );
@@ -1273,6 +1354,7 @@ void C_SoundscapeSystem::PlayRandomSound( randomsound_t &sound )
 		EmitSound_t ep;
 		ep.m_nChannel = CHAN_STATIC;
 		ep.m_pSoundName =  pWaveName;
+#ifndef AS_DLL
 		ep.m_flVolume = sound.masterVolume * RandomInterval( sound.volume );
 		ep.m_SoundLevel = (soundlevel_t)(int)RandomInterval( sound.soundlevel );
 		ep.m_nPitch = (int)RandomInterval( sound.pitch );
@@ -1281,7 +1363,12 @@ void C_SoundscapeSystem::PlayRandomSound( randomsound_t &sound )
 			sound.position = GenerateRandomSoundPosition();
 		}
 		ep.m_pOrigin = &sound.position;
-
+#else
+		ep.m_flVolume = volume;
+		ep.m_SoundLevel = (soundlevel_t)(int)RandomInterval( sound.soundlevel );
+		ep.m_nPitch = pitch;
+		ep.m_pOrigin = &sound.position;
+#endif // AS_DLL
 		C_BaseEntity::EmitSound( filter, SOUND_FROM_WORLD, ep );
 	}
 }
@@ -1306,6 +1393,11 @@ void C_SoundscapeSystem::UpdateRandomSounds( float gameTime )
 			// now schedule the next occurrance
 			// UNDONE: add support for "play once" sounds? FastRemove() here.
 			m_randomSounds[i].nextPlayTime = gameTime + RandomInterval( m_randomSounds[i].time );
+
+#ifdef AS_DLL
+			if (g_IsPlayingSoundscape)
+   				SoundscapePrint(Color(100, 255, 255, 255), "Playing next random sound for RandomSound index \"%d\" In \"%f\" Seconds\n\n", i, m_randomSounds[i].nextPlayTime - gameTime);
+#endif // AS_DLL
 		}
 
 		// update next time to check the queue

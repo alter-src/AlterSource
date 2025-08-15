@@ -4645,6 +4645,73 @@ void CBasePlayer::ForceOrigin( const Vector &vecOrigin )
 	m_vForcedOrigin = vecOrigin;
 }
 
+#ifdef AS_DLL
+bool g_bInSoundscapePositionEditor = false;
+int g_SoundscapePositionNumber = 0;
+
+//color based on g_SoundscapePositionNumber
+Color g_SoundscapeColors[] = {
+	Color(255, 0, 0, 50),
+	Color(200, 200, 0, 50),
+	Color(200, 0, 255, 50),
+	Color(0, 0, 255, 50),
+	Color(0, 255, 0, 50),
+	Color(200, 100, 0, 50),
+	Color(0, 0, 0, 50),
+	Color(0, 100, 250, 50),
+};
+
+//vector positions
+Vector g_SoundscapePositions[] = {
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+	vec3_origin,
+};
+
+bool g_bUsingVector[] = {
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+	false,
+};
+
+#define MAX_SOUNDSCAPES 8
+
+//hidden commands
+CON_COMMAND_F(__ss_maker_start, "", FCVAR_HIDDEN)
+{
+	g_bInSoundscapePositionEditor = true;
+	g_SoundscapePositionNumber = atoi(args.Arg(1));
+}
+
+CON_COMMAND_F(__ss_maker_set, "", FCVAR_HIDDEN)
+{
+	int index = Clamp<int>(atoi(args.Arg(1)), 0, MAX_SOUNDSCAPES - 1);
+
+	g_SoundscapePositions[index] = Vector(atof(args.Arg(2)), atof(args.Arg(3)), atof(args.Arg(4)));
+	g_bUsingVector[index] = atoi(args.Arg(5)) == 0 ? false : true;
+}
+
+ConVar __ss_draw("__ss_draw", "0", FCVAR_HIDDEN);
+
+CON_COMMAND_F(__ss_maker_stop, "", FCVAR_HIDDEN)
+{
+	g_bInSoundscapePositionEditor = false;
+
+	if (!__ss_draw.GetBool())
+		g_bUsingVector[g_SoundscapePositionNumber] = false;
+}
+#endif // AS_DLL
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -4655,6 +4722,96 @@ void CBasePlayer::PostThink()
 	{
 		ClientSettingsChanged();
 	}
+
+#ifdef AS_DLL
+    if (g_bInSoundscapePositionEditor)
+	{
+		do {
+			//get endpos for player's eye position + forward 150
+
+			//eye position
+			Vector EyePos = EyePosition();
+			EyePos.z = EyePos.z - 10;
+
+			//forward direction
+			Vector ForwardDir;
+			AngleVectors(EyeAngles(), &ForwardDir);
+
+			//get endpos
+			Vector EndPos = EyePos + (ForwardDir * 75);
+
+			int index = Clamp<int>(g_SoundscapePositionNumber, 0, MAX_SOUNDSCAPES - 1);
+
+			//draw overlay line
+			Color& c = g_SoundscapeColors[index];
+			NDebugOverlay::Line(EyePos, EndPos, c.r(), c.b(), c.g(), false, NDEBUG_PERSIST_TILL_NEXT_SERVER);
+
+			//set vector at position
+			g_SoundscapePositions[index] = EndPos;
+			g_bUsingVector[index] = true;
+
+			//check for primary attack
+			if (m_afButtonPressed & IN_USE)
+			{
+				g_bInSoundscapePositionEditor = false;
+
+				//write message for client
+				CReliableBroadcastRecipientFilter filter;
+				UserMessageBegin(filter, "SoundscapeMaker_Recieve");
+					WRITE_BYTE(g_SoundscapePositionNumber);
+					WRITE_VEC3COORD(g_SoundscapePositions[g_SoundscapePositionNumber]);
+				MessageEnd();
+
+				break;
+			}
+			
+			if (m_afButtonPressed & IN_RELOAD)
+			{
+				g_bInSoundscapePositionEditor = false;
+				g_bUsingVector[index] = false;
+
+				//write that we canceled the thing
+				CReliableBroadcastRecipientFilter filter;
+				UserMessageBegin(filter, "SoundscapeMaker_Recieve");
+					WRITE_BYTE(255);
+					WRITE_VEC3COORD(vec3_invalid);
+				MessageEnd();
+
+				break;
+			}
+		} while (false);
+	}
+
+	//draw all the positions
+	if (g_bInSoundscapePositionEditor || __ss_draw.GetBool())
+	{
+		//now draw all the positions
+		for (int i = 0; i < MAX_SOUNDSCAPES; i++)
+		{
+			Vector vec = g_SoundscapePositions[i];
+
+			//check for invalid vector
+			if (g_bUsingVector[i] == false || vec == vec3_origin)
+				continue;
+
+			//get box stuff
+			Color& c = g_SoundscapeColors[i];
+
+
+			//draw all the items
+			NDebugOverlay::Box(vec, Vector(-10, -10, -10), Vector(10, 10, 10), c.r(), c.b(), c.g(), c.a(), NDEBUG_PERSIST_TILL_NEXT_SERVER);
+
+			//move vec up 3
+			vec.z = vec.z + 3;
+
+			NDebugOverlay::Text(vec, CFmtStr("Origin: %f %f %f", vec.x, vec.y, vec.z), false, NDEBUG_PERSIST_TILL_NEXT_SERVER);
+
+			//move vec down 6
+			vec.z = vec.z - 6;
+			NDebugOverlay::Text(vec, CFmtStr("Position: %d", i), false, NDEBUG_PERSIST_TILL_NEXT_SERVER);
+		}
+	}
+#endif // AS_DLL
 
 	m_vecSmoothedVelocity = m_vecSmoothedVelocity * SMOOTHING_FACTOR + GetAbsVelocity() * ( 1 - SMOOTHING_FACTOR );
 
@@ -5202,6 +5359,10 @@ void CBasePlayer::Spawn( void )
 	}
 
 	m_weaponFiredTimer.Invalidate();
+
+#ifdef AS_DLL
+	SetVGUImode(false);
+#endif // AS_DLL
 }
 
 void CBasePlayer::Activate( void )
@@ -6752,6 +6913,18 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 		}
 		return true;
 	}
+#ifdef AS_DLL
+	else if ( stricmp( cmd, "vguimode_true" ) == 0 )
+	{
+		SetVGUImode( true );
+		return true;
+	}
+	else if ( stricmp( cmd, "vguimode_false" ) == 0 )
+	{
+		SetVGUImode( false );
+		return true;
+	}
+#endif // AS_DLL
 
 	return false;
 }

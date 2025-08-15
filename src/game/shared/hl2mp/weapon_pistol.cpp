@@ -87,6 +87,11 @@ public:
 	
 #ifndef CLIENT_DLL
 	DECLARE_ACTTABLE();
+
+#ifdef AS_DLL
+	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	int		CapabilitiesGet( void ) { return bits_CAP_WEAPON_RANGE_ATTACK1; }
+#endif // AS_DLL
 #endif
 
 private:
@@ -138,6 +143,23 @@ acttable_t CWeaponPistol::m_acttable[] =
 	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_PISTOL,		false },
 	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_PISTOL,					false },
 	{ ACT_RANGE_ATTACK1,				ACT_RANGE_ATTACK_PISTOL,				false },
+
+#ifdef AS_DLL
+	{ ACT_IDLE,						ACT_IDLE_PISTOL,				true },
+	{ ACT_IDLE_ANGRY,				ACT_IDLE_ANGRY_PISTOL,			true },
+	{ ACT_RANGE_ATTACK1,			ACT_RANGE_ATTACK_PISTOL,		true },
+	{ ACT_RELOAD,					ACT_RELOAD_PISTOL,				true },
+	{ ACT_WALK_AIM,					ACT_WALK_AIM_PISTOL,			true },
+	{ ACT_RUN_AIM,					ACT_RUN_AIM_PISTOL,				true },
+	{ ACT_GESTURE_RANGE_ATTACK1,	ACT_GESTURE_RANGE_ATTACK_PISTOL,true },
+	{ ACT_RELOAD_LOW,				ACT_RELOAD_PISTOL_LOW,			false },
+	{ ACT_RANGE_ATTACK1_LOW,		ACT_RANGE_ATTACK_PISTOL_LOW,	false },
+	{ ACT_COVER_LOW,				ACT_COVER_PISTOL_LOW,			false },
+	{ ACT_RANGE_AIM_LOW,			ACT_RANGE_AIM_PISTOL_LOW,		false },
+	{ ACT_GESTURE_RELOAD,			ACT_GESTURE_RELOAD_PISTOL,		false },
+	{ ACT_WALK,						ACT_WALK_PISTOL,				false },
+	{ ACT_RUN,						ACT_RUN_PISTOL,					false },
+#endif // AS_DLL
 };
 
 
@@ -169,6 +191,42 @@ void CWeaponPistol::Precache( void )
 	BaseClass::Precache();
 }
 
+#ifdef AS_DLL
+#ifndef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+// Input  :
+// Output :
+//-----------------------------------------------------------------------------
+void CWeaponPistol::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
+{
+	switch( pEvent->event )
+	{
+		case EVENT_WEAPON_PISTOL_FIRE:
+		{
+			Vector vecShootOrigin, vecShootDir;
+			vecShootOrigin = pOperator->Weapon_ShootPosition();
+
+			CAI_BaseNPC *npc = pOperator->MyNPCPointer();
+			ASSERT( npc != NULL );
+
+			vecShootDir = npc->GetActualShootTrajectory( vecShootOrigin );
+
+			CSoundEnt::InsertSound( SOUND_COMBAT|SOUND_CONTEXT_GUNFIRE, pOperator->GetAbsOrigin(), SOUNDENT_VOLUME_PISTOL, 0.2, pOperator, SOUNDENT_CHANNEL_WEAPON, pOperator->GetEnemy() );
+
+			WeaponSound( SINGLE_NPC );
+			pOperator->FireBullets( 1, vecShootOrigin, vecShootDir, VECTOR_CONE_PRECALCULATED, MAX_TRACE_LENGTH, m_iPrimaryAmmoType, 2 );
+			pOperator->DoMuzzleFlash();
+			m_iClip1 = m_iClip1 - 1;
+		}
+		break;
+		default:
+			BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
+			break;
+	}
+}
+#endif
+#endif // AS_DLL
 
 //-----------------------------------------------------------------------------
 // Purpose:

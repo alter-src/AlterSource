@@ -539,7 +539,14 @@ ServerConfig.vdf
 compile_commands.json
 mount.txt
 
-# ThePixelMoon: why would anyone need this, its just decompiled models and stuff
-modelsrc/
+# ThePixelMoon: nvm, backing up purposes, yeah
+#modelsrc/
+
+menus-unminified/main/backgrounds
+
+game_shader_generic_example.dll
+game_shader_generic_example.so
+
+soundscape_maker.txt
 
 #-- end AS

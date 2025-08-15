@@ -46,6 +46,10 @@ void RegisterUserMessages( void )
 	usermessages->Register( "AchievementEvent", -1 );
 	usermessages->Register( "UpdateJalopyRadar", -1 );
 
+#ifdef AS_DLL
+	usermessages->Register("SoundscapeMaker_Recieve", -1);
+#endif // AS_DLL
+
 #ifndef _X360
 	// NVNT register haptic user messages
 	RegisterHapticMessages();

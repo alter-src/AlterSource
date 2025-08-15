@@ -121,6 +121,12 @@ public:
 	void CheckRestartGame();
 	void RestartGame();
 
+#ifdef AS_DLL
+#ifndef CLIENT_DLL 
+ 	void InitDefaultAIRelationships( void );
+#endif
+#endif
+
 	void OnNavMeshLoad( void );
 	
 #ifndef CLIENT_DLL

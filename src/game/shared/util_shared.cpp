@@ -778,6 +778,10 @@ void UTIL_Tracer( const Vector &vecStart, const Vector &vecEnd, int iEntIndex,
 
 void UTIL_BloodDrips( const Vector &origin, const Vector &direction, int color, int amount )
 {
+#ifdef AS_DLL
+	IPredictionSystem::SuppressHostEvents( NULL );
+#endif // AS_DLL
+
 	if ( !UTIL_ShouldShowBlood( color ) )
 		return;
 

@@ -62,6 +62,8 @@ $Project "Server (HL2MP)"
 
 		$Folder "Alter DLL"
 		{
+			$File 	"altersrc\logic_playmovie.cpp"
+			$File 	"altersrc\movie_display.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"

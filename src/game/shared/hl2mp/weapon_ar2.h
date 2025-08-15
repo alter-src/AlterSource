@@ -54,6 +54,18 @@ public:
 	
 	virtual bool Deploy( void );
 
+#ifdef AS_DLL
+#ifndef CLIENT_DLL
+	virtual void 	FireNPCSecondaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
+	virtual void 	FireNPCPrimaryAttack( CBaseCombatCharacter *pOperator, bool bUseWeaponAngles );
+	virtual void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+
+	virtual int CapabilitiesGet()
+	{ 
+		return bits_CAP_WEAPON_RANGE_ATTACK1; 
+	}
+#endif
+#endif // AS_DLL
 
 	virtual const Vector& GetBulletSpread( void )
 	{
