@@ -69,11 +69,11 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGravityGun )
 	CLIENTEFFECT_MATERIAL( PHYSGUN_BEAM_SPRITE )
 	CLIENTEFFECT_MATERIAL( PHYSGUN_BEAM_GLOW )
 CLIENTEFFECT_REGISTER_END()
-
-ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_CLIENTDLL );
-ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_CLIENTDLL );
-ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO |  FCVAR_ARCHIVE | FCVAR_CLIENTDLL );
 #endif
+
+ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
+ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
+ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
 
 IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short physicsbone )
 {
@@ -180,96 +180,6 @@ public:
 private:
 	hlshadowcontrol_params_t	m_shadow;
 };
-
-#ifdef CLIENT_DLL
-float fadeSpeed = 0.5f;
-bool fadingOut = true;
-static float lastPhysgunR = -1.0f, lastPhysgunG = -1.0f, lastPhysgunB = -1.0f;
-
-class PlayerWeaponColorProxy : public IMaterialProxy
-{
-public:
-	virtual bool Init(IMaterial* pMaterial, KeyValues* pKeyValues);
-	virtual void OnBind(void* pC_BaseEntity);
-	virtual void Release();
-	virtual IMaterial* GetMaterial();
-
-private:
-	IMaterial* m_pMaterial;
-	IMaterialVar* m_pResultVar;
-};
-
-bool PlayerWeaponColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
-{
-	bool foundVar;
-	m_pResultVar = pMaterial->FindVar("$selfillumtint", &foundVar, false);
-	m_pMaterial = pMaterial;
-	return foundVar;
-}
-
-void PlayerWeaponColorProxy::OnBind(void* pC_BaseEntity)
-{
-	if (m_pResultVar)
-	{
-		float currentR = physgun_r.GetFloat();
-		float currentG = physgun_g.GetFloat();
-		float currentB = physgun_b.GetFloat();
-
-		float targetRed = currentR + 50.0f;
-		float targetGreen = currentG + 50.0f;
-		float targetBlue = currentB + 50.0f;
-
-		static float red = currentR, green = currentG, blue = currentB;
-
-		if (currentR != lastPhysgunR || currentG != lastPhysgunG || currentB != lastPhysgunB)
-		{
-			red = currentR;
-			green = currentG;
-			blue = currentB;
-			lastPhysgunR = currentR;
-			lastPhysgunG = currentG;
-			lastPhysgunB = currentB;
-		}
-
-		if (fadingOut)
-		{
-			if (red < targetRed)
-				red += fadeSpeed;
-			if (green < targetGreen)
-				green += fadeSpeed;
-			if (blue < targetBlue)
-				blue += fadeSpeed;
-			if (red >= targetRed && green >= targetGreen && blue >= targetBlue)
-				fadingOut = false;
-		} else {
-			if (red > currentR)
-				red -= fadeSpeed;
-			if (green > currentG)
-				green -= fadeSpeed;
-			if (blue > currentB)
-				blue -= fadeSpeed;
-			if (red <= currentR && green <= currentG && blue <= currentB)
-				fadingOut = true;
-		}
-
-		float r = red / 255.0f;
-		float g = green / 255.0f;
-		float b = blue / 255.0f;
-
-		m_pResultVar->SetVecValue(r, g, b);
-	}
-}
-
-void PlayerWeaponColorProxy::Release()
-{}
-
-IMaterial* PlayerWeaponColorProxy::GetMaterial()
-{
-	return m_pMaterial;
-}
-
-EXPOSE_INTERFACE(PlayerWeaponColorProxy, IMaterialProxy, "PlayerWeaponColor" IMATERIAL_PROXY_INTERFACE_VERSION);
-#endif
 
 BEGIN_SIMPLE_DATADESC( CGravControllerPoint )
 
@@ -584,6 +494,12 @@ public:
 	void OpenElements( void );
 	void CloseElements( void );
 
+	void UpdatePhysgunColors( void );
+
+    int GetPhysgunColorR( void ) const { return m_iPhysgunColorR; }
+    int GetPhysgunColorG( void ) const { return m_iPhysgunColorG; }
+    int GetPhysgunColorB( void ) const { return m_iPhysgunColorB; }
+
 private:
 	CNetworkVar( int, m_active );
 	bool		m_useDown;
@@ -595,6 +511,10 @@ private:
 	Vector		m_originalObjectPosition;
 	CNetworkVector	( m_targetPosition );
 	CNetworkVector	( m_worldPosition );
+
+    CNetworkVar( int, m_iPhysgunColorR );
+    CNetworkVar( int, m_iPhysgunColorG );
+    CNetworkVar( int, m_iPhysgunColorB );
 
 #if 1
 	// adnan
@@ -614,7 +534,9 @@ private:
 	int			m_poseActive;                     // Cached index of "active" pose parameter
 	bool		m_sbStaticPoseParamsLoaded;       // Have we loaded the pose parameter?
 
+#ifndef CLIENT_DLL
 	DECLARE_ACTTABLE();
+#endif
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( WeaponPhysicsGun, DT_WeaponPhysicsGun )
@@ -635,6 +557,9 @@ BEGIN_NETWORK_TABLE( CWeaponPhysicsGun, DT_WeaponPhysicsGun )
 	RecvPropFloat( RECVINFO( m_flElementPosition ) ),
 	RecvPropFloat( RECVINFO( m_flElementDestination ) ),
 	RecvPropBool( RECVINFO( m_bOpen ) ),
+    RecvPropInt( RECVINFO( m_iPhysgunColorR ) ),
+    RecvPropInt( RECVINFO( m_iPhysgunColorG ) ),
+    RecvPropInt( RECVINFO( m_iPhysgunColorB ) ),
 #else
 	SendPropEHandle( SENDINFO( m_hObject ) ),
 	SendPropInt( SENDINFO( m_physicsBone ) ),
@@ -650,6 +575,9 @@ BEGIN_NETWORK_TABLE( CWeaponPhysicsGun, DT_WeaponPhysicsGun )
 	SendPropFloat( SENDINFO( m_flElementPosition ) ),
 	SendPropFloat( SENDINFO( m_flElementDestination ) ),
 	SendPropBool( SENDINFO( m_bOpen ) ),
+    SendPropInt( SENDINFO( m_iPhysgunColorR ), 8, SPROP_UNSIGNED ),
+    SendPropInt( SENDINFO( m_iPhysgunColorG ), 8, SPROP_UNSIGNED ),
+    SendPropInt( SENDINFO( m_iPhysgunColorB ), 8, SPROP_UNSIGNED ),
 #endif
 END_NETWORK_TABLE()
 
@@ -661,25 +589,20 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( weapon_physgun, CWeaponPhysicsGun );
 PRECACHE_WEAPON_REGISTER(weapon_physgun);
 
+#ifndef CLIENT_DLL
 acttable_t	CWeaponPhysicsGun::m_acttable[] = 
 {
-	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_PHYSGUN,					false },
-	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_PHYSGUN,			false },
-
-	{ ACT_MP_RUN,						ACT_HL2MP_RUN_PHYSGUN,					false },
-	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_PHYSGUN,			false },
-
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
-
-	{ ACT_MP_RELOAD_STAND,				ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
-	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
-
-	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_PHYSGUN,					false },
+	{ ACT_HL2MP_IDLE,					ACT_HL2MP_IDLE_PHYSGUN,					false },
+	{ ACT_HL2MP_RUN,					ACT_HL2MP_RUN_PHYSGUN,					false },
+	{ ACT_HL2MP_IDLE_CROUCH,			ACT_HL2MP_IDLE_CROUCH_PHYSGUN,			false },
+	{ ACT_HL2MP_WALK_CROUCH,			ACT_HL2MP_WALK_CROUCH_PHYSGUN,			false },
+	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
+	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
+	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_PHYSGUN,					false },
 };
 
 IMPLEMENT_ACTTABLE(CWeaponPhysicsGun);
-
+#endif
 
 //---------------------------------------------------------
 // Save/Restore
@@ -709,7 +632,116 @@ BEGIN_DATADESC( CWeaponPhysicsGun )
 	DEFINE_FIELD( m_poseActive, FIELD_INTEGER ),
 	DEFINE_FIELD( m_sbStaticPoseParamsLoaded, FIELD_BOOLEAN ),
 
+    DEFINE_FIELD( m_iPhysgunColorR, FIELD_INTEGER ),
+    DEFINE_FIELD( m_iPhysgunColorG, FIELD_INTEGER ),
+    DEFINE_FIELD( m_iPhysgunColorB, FIELD_INTEGER ),
+
 END_DATADESC()
+
+//=========================================================
+#ifdef CLIENT_DLL
+float fadeSpeed = 0.5f;
+bool fadingOut = true;
+static float lastPhysgunR = -1.0f, lastPhysgunG = -1.0f, lastPhysgunB = -1.0f;
+
+class PlayerWeaponColorProxy : public IMaterialProxy
+{
+public:
+	virtual bool Init(IMaterial* pMaterial, KeyValues* pKeyValues);
+	virtual void OnBind(void* pC_BaseEntity);
+	virtual void Release();
+	virtual IMaterial* GetMaterial();
+
+private:
+	IMaterial* m_pMaterial;
+	IMaterialVar* m_pResultVar;
+};
+
+bool PlayerWeaponColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
+{
+	bool foundVar;
+	m_pResultVar = pMaterial->FindVar("$selfillumtint", &foundVar, false);
+	m_pMaterial = pMaterial;
+	return foundVar;
+}
+
+void PlayerWeaponColorProxy::OnBind(void* pC_BaseEntity)
+{
+	if (m_pResultVar)
+	{
+		C_WeaponPhysicsGun *pWeapon = dynamic_cast<C_WeaponPhysicsGun*>(C_BasePlayer::GetLocalPlayer()->GetActiveWeapon());
+		float currentR;
+		float currentG;
+		float currentB;
+        if ( pWeapon )
+        {
+            currentR = pWeapon->GetPhysgunColorR();
+            currentG = pWeapon->GetPhysgunColorG();
+            currentB = pWeapon->GetPhysgunColorB();
+		} else
+		{
+			// ThePixelMoon: sometimes, it just goes blue for a moment. for the player to not notice,
+			// we're going to make it fully black instead.
+			currentR = 0;
+			currentG = 0;
+			currentB = 0;
+		}
+
+		float targetRed = currentR + 50.0f;
+		float targetGreen = currentG + 50.0f;
+		float targetBlue = currentB + 50.0f;
+
+		static float red = currentR, green = currentG, blue = currentB;
+
+		if (currentR != lastPhysgunR || currentG != lastPhysgunG || currentB != lastPhysgunB)
+		{
+			red = currentR;
+			green = currentG;
+			blue = currentB;
+			lastPhysgunR = currentR;
+			lastPhysgunG = currentG;
+			lastPhysgunB = currentB;
+		}
+
+		if (fadingOut)
+		{
+			if (red < targetRed)
+				red += fadeSpeed;
+			if (green < targetGreen)
+				green += fadeSpeed;
+			if (blue < targetBlue)
+				blue += fadeSpeed;
+			if (red >= targetRed && green >= targetGreen && blue >= targetBlue)
+				fadingOut = false;
+		} else {
+			if (red > currentR)
+				red -= fadeSpeed;
+			if (green > currentG)
+				green -= fadeSpeed;
+			if (blue > currentB)
+				blue -= fadeSpeed;
+			if (red <= currentR && green <= currentG && blue <= currentB)
+				fadingOut = true;
+		}
+
+		float r = red / 255.0f;
+		float g = green / 255.0f;
+		float b = blue / 255.0f;
+
+		m_pResultVar->SetVecValue(r, g, b);
+	}
+}
+
+void PlayerWeaponColorProxy::Release()
+{}
+
+IMaterial* PlayerWeaponColorProxy::GetMaterial()
+{
+	return m_pMaterial;
+}
+
+EXPOSE_INTERFACE(PlayerWeaponColorProxy, IMaterialProxy, "PlayerWeaponColor" IMATERIAL_PROXY_INTERFACE_VERSION);
+#endif
 
 //=========================================================
 //=========================================================
@@ -725,8 +757,30 @@ CWeaponPhysicsGun::CWeaponPhysicsGun()
 	m_bOpen = false;
 	m_poseActive = -1;
 	m_sbStaticPoseParamsLoaded = false;
+    m_iPhysgunColorR = 0;
+    m_iPhysgunColorG = 229;
+    m_iPhysgunColorB = 238;
 }
 
+void CWeaponPhysicsGun::UpdatePhysgunColors( void )
+{
+#ifndef CLIENT_DLL
+    CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+    if ( pOwner )
+    {
+        const char *pszR = engine->GetClientConVarValue( pOwner->entindex(), "physgun_r" );
+        const char *pszG = engine->GetClientConVarValue( pOwner->entindex(), "physgun_g" );
+        const char *pszB = engine->GetClientConVarValue( pOwner->entindex(), "physgun_b" );
+        
+        if ( pszR && pszG && pszB )
+        {
+            m_iPhysgunColorR = clamp( atoi( pszR ), 0, 255 );
+            m_iPhysgunColorG = clamp( atoi( pszG ), 0, 255 );
+            m_iPhysgunColorB = clamp( atoi( pszB ), 0, 255 );
+        }
+    }
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // On Remove
@@ -1252,7 +1306,7 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		DrawBeamQuadratic( points[0], points[1], points[2], pObject ? 13/3.0f : 13/5.0f, color, -scrollOffset );
 
 		IMaterial *pMaterial = materials->FindMaterial( PHYSGUN_BEAM_GLOW, TEXTURE_GROUP_CLIENT_EFFECTS );
-		color32 clr = { physgun_r.GetInt(), physgun_g.GetInt(), physgun_b.GetInt(), 255 };
+		color32 clr = { m_iPhysgunColorR, m_iPhysgunColorG, m_iPhysgunColorB, 255 };
 
 		float scale = random->RandomFloat( 3, 5 ) * ( pObject ? 2 : 2 );
 
@@ -1336,7 +1390,7 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 	DrawBeamQuadratic( points[0], points[1], points[2], pObject ? 13/3.0f : 13/5.0f, color, -scrollOffset );
 
 	IMaterial *pMaterial = materials->FindMaterial( PHYSGUN_BEAM_GLOW, TEXTURE_GROUP_CLIENT_EFFECTS );
-	color32 clr = { physgun_r.GetInt(), physgun_g.GetInt(), physgun_b.GetInt(), 255 };
+	color32 clr = { m_iPhysgunColorR, m_iPhysgunColorG, m_iPhysgunColorB, 255 };
 
 	float scale = random->RandomFloat( 3, 5 ) * ( pObject ? 3 : 2 );
 
@@ -1387,6 +1441,8 @@ void CWeaponPhysicsGun::ItemPreFrame()
 	BaseClass::ItemPreFrame();
 
 #ifdef GAME_DLL
+	UpdatePhysgunColors();
+
 	// Update the object if the weapon is switched on.
 	if( m_active )
 	{

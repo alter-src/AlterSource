@@ -49,6 +49,14 @@ LINK_ENTITY_TO_CLASS( player, CHL2MP_Player );
 
 LINK_ENTITY_TO_CLASS( info_player_combine, CPointEntity );
 LINK_ENTITY_TO_CLASS( info_player_rebel, CPointEntity );
+#ifdef AS_DLL
+LINK_ENTITY_TO_CLASS( info_player_counterterrorist, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_terrorist, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_allies, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_axis, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_teamspawn, CPointEntity );
+LINK_ENTITY_TO_CLASS( info_player_coop, CPointEntity );
+#endif // AS_DLL
 
 // specific to the local player
 BEGIN_SEND_TABLE_NOBASE( CHL2MP_Player, DT_HL2MPLocalPlayerExclusive )
@@ -1431,6 +1439,17 @@ void CHL2MP_Player::DeathSound( const CTakeDamageInfo &info )
 	EmitSound( filter, entindex(), ep );
 }
 
+#ifdef AS_DLL
+static const char *asSpawns[] = {
+	"info_player_counterterrorist",
+	"info_player_terrorist",
+	"info_player_allies",
+	"info_player_axis",
+	"info_player_teamspawn",
+	"info_player_coop"
+};
+#endif // AS_DLL
+
 CBaseEntity* CHL2MP_Player::EntSelectSpawnPoint( void )
 {
 	CBaseEntity *pSpot = NULL;
@@ -1488,6 +1507,27 @@ CBaseEntity* CHL2MP_Player::EntSelectSpawnPoint( void )
 		pSpot = gEntList.FindEntityByClassname( pSpot, pSpawnpointName );
 	} while ( pSpot != pFirstSpot ); // loop if we're not back to the start
 
+#ifdef AS_DLL
+	for ( int i = 0; i < ARRAYSIZE( asSpawns ); ++i )
+	{
+		pSpot = gEntList.FindEntityByClassname( NULL, asSpawns[i] );
+		pFirstSpot = pSpot;
+
+		do
+		{
+			if ( pSpot && g_pGameRules->IsSpawnPointValid( pSpot, this ) )
+			{
+				if ( pSpot->GetLocalOrigin() != vec3_origin )
+				{
+					DevMsg( "using alt spawn %s\n", asSpawns[i] );
+					goto ReturnSpot;
+				}
+			}
+			pSpot = gEntList.FindEntityByClassname( pSpot, asSpawns[i] );
+		} while ( pSpot && pSpot != pFirstSpot );
+	}
+#endif // AS_DLL
+	
 	// we haven't found a place to spawn yet,  so kill any guy at the first spawn point and spawn there
 	if ( pSpot )
 	{

@@ -21,9 +21,16 @@
 #include "sourcevr/isourcevirtualreality.h"
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
+#ifdef AS_DLL
+#include "vgui/IInput.h"
+#endif // AS_DLL
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#ifdef AS_DLL
+void ToggleThirdPerson( bool bValue );
+#endif // AS_DLL
 
 int ScreenTransform( const Vector& point, Vector& screen );
 
@@ -244,6 +251,17 @@ void C_PropVehicleDriveable::DrawHudElements( )
 	CHudTexture *pIcon;
 	int iIconX, iIconY;
 
+#ifdef AS_DLL
+	// HACK!!
+	if ( m_hPlayer && m_hPlayer.Get() == C_BasePlayer::GetLocalPlayer() )
+	{
+		if ( vgui::input()->IsKeyDown( KEY_LCONTROL ) )
+			ToggleThirdPerson( true );
+		else
+			ToggleThirdPerson( false );
+	}
+#endif // AS_DLL
+
 	if (m_bHasGun)
 	{
 		// draw crosshairs for vehicle gun
@@ -414,6 +432,10 @@ void C_PropVehicleDriveable::OnEnteredVehicle( C_BaseCombatCharacter *pPassenger
 // NVNT - added function
 void C_PropVehicleDriveable::OnExitedVehicle( C_BaseCombatCharacter *pPassenger )
 {
+#ifdef AS_DLL
+	ToggleThirdPerson( false );
+#endif // AS_DLL
+
 #if defined( WIN32 ) && !defined( _X360 )
 	// NVNT notify haptics system of navigation exit
 	HapticsExitedVehicle(this,pPassenger);

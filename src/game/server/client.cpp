@@ -956,6 +956,10 @@ void CC_Player_SetModel( const CCommand &args )
 	{
 		static char szName[256];
 		Q_snprintf( szName, sizeof( szName ), "models/%s.mdl", args[1] );
+#ifdef AS_DLL
+		// ThePixelMoon: this shit crashes cuz no precache
+		pPlayer->PrecacheModel( szName );
+#endif // AS_DLL
 		pPlayer->SetModel( szName );
 		UTIL_SetSize(pPlayer, VEC_HULL_MIN, VEC_HULL_MAX);
 	}
