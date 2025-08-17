@@ -393,6 +393,27 @@ void C_VGuiScreen::ClientThink( void )
 	int px = (int)(u * m_nPixelWidth + 0.5f);
 	int py = (int)(v * m_nPixelHeight + 0.5f);
 
+#ifdef AS_DLL
+// START TEDDYS FIX
+	for (int i = 0; i < pPanel->GetChildCount(); i++)
+	{
+		vgui::Button *child = dynamic_cast<vgui::Button*>(pPanel->GetChild(i));
+		if ( child )
+		{
+			int x1, x2, y1, y2;
+			child->GetBounds( x1, y1, x2, y2 );
+
+			// Generate mouse input commands
+			if ( (m_nButtonState & IN_ATTACK) )
+			{
+				if ( px >= x1 && px <= x1 + x2 && py >= y1 && py <= y1 + y2 )
+					child->FireActionSignal();
+			}
+		}
+	}
+// FIN TEDDYS FIX
+#endif // AS_DLL
+
 	// Generate mouse input commands
 	if ((px != m_nOldPx) || (py != m_nOldPy))
 	{
@@ -941,6 +962,36 @@ void CVGuiScreenPanel::OnCommand( const char *command)
 	{
 		engine->ClientCmd( const_cast<char *>( command ) );
 	}
+#ifdef AS_DLL
+	if ( stricmp( command, "out1" ) == 0
+		|| stricmp( command, "out2" ) == 0
+		|| stricmp( command, "out3" ) == 0
+		|| stricmp( command, "out4" ) == 0
+		|| stricmp( command, "out5" ) == 0
+		|| stricmp( command, "out6" ) == 0
+		|| stricmp( command, "out7" ) == 0
+		|| stricmp( command, "out8" ) == 0
+		|| stricmp( command, "out9" ) == 0
+		|| stricmp( command, "out10" ) == 0
+		|| stricmp( command, "out11" ) == 0
+		|| stricmp( command, "out12" ) == 0
+		|| stricmp( command, "out13" ) == 0
+		|| stricmp( command, "out14" ) == 0
+		|| stricmp( command, "out15" ) == 0
+		|| stricmp( command, "out16" ) == 0 )
+	{
+		char entindex[8];
+		int index = this->GetEntity()->entindex();
+		Q_snprintf(entindex, sizeof(entindex), "%d", index);
+		char newcommand[16] = { ' ' };
+		strcat( newcommand, command );
+		strcat( newcommand, " " );
+		strcat( newcommand, entindex );
+		engine->ClientCmd_Unrestricted( const_cast<char *>( newcommand ) );
+		BaseClass::OnCommand( newcommand );
+		return;
+	}
+#endif // AS_DLL
 
 	BaseClass::OnCommand(command);
 }

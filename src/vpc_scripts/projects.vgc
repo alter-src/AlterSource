@@ -22,6 +22,16 @@ $Project "client"
 	//-- end AS
 }
 
+$Project "gamepadui"
+{
+	"game\gamepadui\gamepadui_episodic.vpc"		[$EPISODIC]
+	"game\gamepadui\gamepadui_portal.vpc"		[$PORTAL]
+	"game\gamepadui\gamepadui_hl2.vpc"			[$HL2]
+	//-- AS
+	"game\gamepadui\gamepadui_alter.vpc"		[$ALTER]
+	//-- end AS
+}
+
 $Project "fgdlib"
 {
 	"fgdlib\fgdlib.vpc" [$WINDOWS]

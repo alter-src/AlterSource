@@ -71,9 +71,9 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGravityGun )
 CLIENTEFFECT_REGISTER_END()
 #endif
 
-ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
-ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
-ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_REPLICATED );
+ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
 
 IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short physicsbone )
 {

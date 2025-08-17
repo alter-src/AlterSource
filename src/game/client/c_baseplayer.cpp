@@ -1138,7 +1138,11 @@ void C_BasePlayer::DetermineVguiInputMode( CUserCmd *pCmd )
 		SetVGuiScreenButtonState( m_pCurrentVguiScreen.Get(), pCmd->buttons );
 
 		// Kill all attack inputs if we're in vgui screen mode
+#ifndef AS_DLL
 		pCmd->buttons &= ~(IN_ATTACK | IN_ATTACK2);
+#else
+		pCmd->buttons &= ~(IN_ATTACK | IN_ATTACK2 | IN_VALIDVGUIINPUT);
+#endif // AS_DLL
 		return;
 	}
 
@@ -1201,7 +1205,11 @@ void C_BasePlayer::DetermineVguiInputMode( CUserCmd *pCmd )
 		SetVGuiScreenButtonState( m_pCurrentVguiScreen.Get(), pCmd->buttons );
 
 		// Kill all attack inputs if we're in vgui screen mode
+#ifndef AS_DLL
 		pCmd->buttons &= ~(IN_ATTACK | IN_ATTACK2);
+#else
+		pCmd->buttons &= ~(IN_ATTACK | IN_ATTACK2 | IN_VALIDVGUIINPUT);
+#endif // AS_DLL
 	}
 }
 
@@ -1269,11 +1277,12 @@ bool C_BasePlayer::CreateMove( float flInputSampleTime, CUserCmd *pCmd, bool bVg
 	// Check to see if we're in vgui input mode...
 	DetermineVguiInputMode( pCmd );
 #else
-	if (bVguiUpdate)
+	if ( bVguiUpdate )
 	{
 		bool tempvguimode = IsInVGuiInputMode();
 		// Check to see if we're in vgui input mode...
-		DetermineVguiInputMode( pCmd );
+		if( pCmd->buttons & IN_VALIDVGUIINPUT )
+			DetermineVguiInputMode( pCmd );
 
 		if (tempvguimode == !IsInVGuiInputMode())
 		{

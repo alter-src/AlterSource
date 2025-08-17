@@ -1228,6 +1228,10 @@ void CInput::CreateMove ( int sequence_number, float input_sample_frametime, boo
 		VectorCopy( m_angPreviousViewAngles, cmd->viewangles );
 	}
 
+#ifdef AS_DLL
+	cmd->buttons |= IN_VALIDVGUIINPUT;
+#endif // AS_DLL
+
 	// Let the move manager override anything it wants to.
 	if ( g_pClientMode->CreateMove( input_sample_frametime, cmd ) )
 	{

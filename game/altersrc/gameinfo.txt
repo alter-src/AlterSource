@@ -1,9 +1,9 @@
 "GameInfo"
 {
 	game	"Alter Source"
-	// ThePixelMoon: the title is handled by the html main menu
-	title	""
-	title2	""
+	// ThePixelMoon: titles are handled by gamepadui
+	title	" "
+	title2	" "
 	type multiplayer_only
 	nomodels 0
 	nohimodel 1
@@ -14,7 +14,6 @@
 		"test_speakers"		1
 		"test_hardware"		1
 	}
-
 
 	FileSystem
 	{

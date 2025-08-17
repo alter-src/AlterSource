@@ -548,5 +548,6 @@ game_shader_generic_example.dll
 game_shader_generic_example.so
 
 soundscape_maker.txt
+artwork/
 
 #-- end AS

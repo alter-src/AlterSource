@@ -56,6 +56,10 @@
 #include "replay/ienginereplay.h"
 #endif
 
+#ifdef AS_DLL
+#include "menu_background.h"
+#endif // AS_DLL
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -195,6 +199,10 @@ CBaseViewport::CBaseViewport() : vgui::EditablePanel( NULL, "CBaseViewport")
 		}
 	}
 
+#ifdef AS_DLL
+	m_pMainMenuPanel = NULL;
+#endif // AS_DLL
+
 	m_OldSize[ 0 ] = m_OldSize[ 1 ] = -1;
 }
 
@@ -225,6 +233,20 @@ void CBaseViewport::OnScreenSizeChanged(int iOldWide, int iOldTall)
 
 	// hide all panels when reconnecting 
 	ShowPanel( PANEL_ALL, false );
+
+#ifdef AS_DLL
+	bool bRestartMainMenuVideo = false;
+
+	if ( m_pMainMenuPanel )
+		bRestartMainMenuVideo = m_pMainMenuPanel->IsVideoPlaying();
+
+	m_pMainMenuPanel = new CMainMenu( NULL, NULL );
+	m_pMainMenuPanel->SetZPos( 500 );
+	m_pMainMenuPanel->SetVisible( false );
+
+	if ( bRestartMainMenuVideo )
+		m_pMainMenuPanel->StartVideo();
+#endif // AS_DLL
 
 	// re-enable the spectator gui if it was previously visible
 	if ( bSpecGuiWasVisible )
@@ -513,6 +535,13 @@ void CBaseViewport::RemoveAllPanels( void)
 		m_pBackGround = NULL;
 	}
 #endif
+#ifdef AS_DLL
+	if ( m_pMainMenuPanel )
+	{
+		m_pMainMenuPanel->MarkForDeletion();
+		m_pMainMenuPanel = NULL;
+	}
+#endif // AS_DLL
 	m_Panels.Purge();
 	m_pActivePanel = NULL;
 	m_pLastActivePanel = NULL;
@@ -532,6 +561,11 @@ CBaseViewport::~CBaseViewport()
 	}
 	m_pBackGround = NULL;
 #endif
+#ifdef AS_DLL
+	if ( !m_bHasParent && m_pMainMenuPanel )
+		m_pMainMenuPanel->MarkForDeletion();
+	m_pMainMenuPanel = NULL;
+#endif // AS_DLL
 	RemoveAllPanels();
 
 	gameeventmanager->RemoveListener( this );
@@ -552,6 +586,12 @@ void CBaseViewport::Start( IGameUIFuncs *pGameUIFuncs, IGameEventManager2 * pGam
 	m_pBackGround->SetVisible( false );
 #endif
 	CreateDefaultPanels();
+#ifdef AS_DLL
+	m_pMainMenuPanel = new CMainMenu( NULL, NULL );
+	m_pMainMenuPanel->SetZPos( 500 );
+	m_pMainMenuPanel->SetVisible( false );
+	m_pMainMenuPanel->StartVideo();
+#endif // AS_DLL
 
 	m_GameEventManager->AddListener( this, "game_newmap", false );
 	
@@ -757,6 +797,26 @@ int CBaseViewport::GetDeathMessageStartHeight( void )
 {
 	return YRES(16);
 }
+
+#ifdef AS_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseViewport::StartMainMenuVideo()
+{
+	if ( m_pMainMenuPanel )
+		m_pMainMenuPanel->StartVideo();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CBaseViewport::StopMainMenuVideo()
+{
+	if ( m_pMainMenuPanel )
+		m_pMainMenuPanel->StopVideo();
+}
+#endif // AS_DLL
 
 void CBaseViewport::Paint()
 {

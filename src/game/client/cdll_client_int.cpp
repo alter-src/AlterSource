@@ -152,7 +152,7 @@
 
 #ifdef AS_DLL
 #include "mountlogic.h"
-#include "basemenu.h"
+#include "menu_background.h"
 #endif // AS_DLL
 
 extern vgui::IInputInternal *g_InputInternal;
@@ -176,6 +176,10 @@ extern vgui::IInputInternal *g_InputInternal;
 #ifdef SIXENSE
 #include "sixense/in_sixense.h"
 #endif
+
+#if defined( GAMEPADUI )
+#include "../gamepadui/igamepadui.h"
+#endif // GAMEPADUI
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -223,11 +227,11 @@ IEngineClientReplay *g_pEngineClientReplay = NULL;
 IReplaySystem *g_pReplay = NULL;
 #endif
 
-IHaptics* haptics = NULL;// NVNT haptics system interface singleton
+#if defined(GAMEPADUI)
+IGamepadUI* g_pGamepadUI = nullptr;
+#endif // GAMEPADUI
 
-#ifdef AS_DLL
-RootPanel          	*IBaseMenu;
-#endif // AS_DLL
+IHaptics* haptics = NULL;// NVNT haptics system interface singleton
 
 //=============================================================================
 // HPE_BEGIN
@@ -359,6 +363,29 @@ bool g_bTextMode = false;
 
 
 static ConVar *g_pcv_ThreadMode = NULL;
+
+// GAMEPADUI TODO - put this somewhere better. (Madi)
+#if defined( GAMEPADUI )
+const bool IsGamepadUI()
+{
+#ifdef AS_DLL
+	// ThePixelMoon: html sucks, embrace gamepadui
+	return true;
+#else
+	if ( CommandLine()->FindParm( "-gamepadui" ) )
+		return true;
+
+	if ( CommandLine()->FindParm( "-nogamepadui" ) )
+		return false;
+
+	const char *pszSteamDeckEnv = getenv( "SteamDeck" );
+	if ( pszSteamDeckEnv && *pszSteamDeckEnv )
+		return atoi( pszSteamDeckEnv ) != 0;
+
+	return false;
+#endif // AS_DLL
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: interface for gameui to modify voice bans
@@ -916,16 +943,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	{
 		CommandLine()->AppendParm( "-no_texture_stream", NULL );
 	}
-
-	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
-	{
-		if ( !IBaseMenu )
-		{
-			OverrideUI->Create( NULL );
-			IBaseMenu = OverrideUI->GetMenuBase();
-			OverrideRootUI();
-		}
-	}
 #endif // AS_DLL
 
 	// We aren't happy unless we get all of our interfaces.
@@ -1184,6 +1201,10 @@ bool CHLClient::ReplayPostInit()
 #endif
 }
 
+#ifdef AS_DLL
+void SwapDisconnectCommand();
+#endif // AS_DLL
+
 //-----------------------------------------------------------------------------
 // Purpose: Called after client & server DLL are loaded and all systems initialized
 //-----------------------------------------------------------------------------
@@ -1216,7 +1237,46 @@ void CHLClient::PostInit()
 
 #ifdef AS_DLL
 	LoadGameMounts();
+	
+	SwapDisconnectCommand();
 #endif // AS_DLL
+
+#if defined(GAMEPADUI)
+	if ( IsGamepadUI() )
+	{
+		CSysModule* pGamepadUIModule = g_pFullFileSystem->LoadModule( "gamepadui", "GAMEBIN", false );
+		if ( pGamepadUIModule != nullptr )
+		{
+			GamepadUI_Log( "Loaded gamepadui module.\n" );
+
+			CreateInterfaceFn gamepaduiFactory = Sys_GetFactory( pGamepadUIModule );
+			if ( gamepaduiFactory != nullptr )
+			{
+				g_pGamepadUI = (IGamepadUI*) gamepaduiFactory( GAMEPADUI_INTERFACE_VERSION, NULL );
+				if ( g_pGamepadUI != nullptr )
+				{
+					GamepadUI_Log( "Initializing IGamepadUI interface...\n" );
+
+					factorylist_t factories;
+					FactoryList_Retrieve( factories );
+					g_pGamepadUI->Initialize( factories.appSystemFactory );
+				}
+				else
+				{
+					GamepadUI_Log( "Unable to pull IGamepadUI interface.\n" );
+				}
+			}
+			else
+			{
+				GamepadUI_Log( "Unable to get gamepadui factory.\n" );
+			}
+		}
+		else
+		{
+			GamepadUI_Log( "Unable to load gamepadui module\n" );
+		}
+	}
+#endif // GAMEPADUI
 
 #if !defined( _X360 ) && !defined( NO_STEAM ) && defined( AS_DLL )
 	// This needs to be called every time the game is launched since Steam doesn't save the updated position
@@ -1274,6 +1334,11 @@ void CHLClient::Shutdown( void )
 
 	IGameSystem::ShutdownAllSystems();
 	
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->Shutdown();
+#endif // GAMEPADUI
+
 	gHUD.Shutdown();
 	VGui_Shutdown();
 	
@@ -1314,6 +1379,11 @@ int CHLClient::HudVidInit( void )
 	gHUD.VidInit();
 
 	GetClientVoiceMgr()->VidInit();
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->VidInit();
+#endif // GAMEPADUI
 
 	return 1;
 }
@@ -1365,6 +1435,11 @@ void CHLClient::HudUpdate( bool bActive )
 		g_pSixenseInput->SixenseFrame( 0, NULL ); 
 	}
 #endif
+
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnUpdate( frametime );
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1706,6 +1781,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 
 	gHUD.LevelInit();
 
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePreEntity();
+#endif // GAMEPADUI
+
 #if defined( REPLAY_ENABLED )
 	// Initialize replay ragdoll recorder
 	if ( !engine->IsPlayingDemo() )
@@ -1725,12 +1805,10 @@ void CHLClient::LevelInitPostEntity( )
 	C_PhysPropClientside::RecreateAll();
 	internalCenterPrint->Clear();
 
-#ifdef AS_DLL
-	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
-	{
-		IBaseMenu->Refresh();
-	}
-#endif // AS_DLL
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelInitializePostEntity();
+#endif // GAMEPADUI
 }
 
 //-----------------------------------------------------------------------------
@@ -1797,6 +1875,11 @@ void CHLClient::LevelShutdown( void )
 	
 	StopAllRumbleEffects();
 
+#if defined(GAMEPADUI)
+	if (g_pGamepadUI != nullptr)
+		g_pGamepadUI->OnLevelShutdown();
+#endif // GAMEPADUI
+
 	gHUD.LevelShutdown();
 
 	internalCenterPrint->Clear();
@@ -1813,13 +1896,6 @@ void CHLClient::LevelShutdown( void )
 #ifdef _XBOX
 	ReleaseRenderTargets();
 #endif
-
-#ifdef AS_DLL
-	if ( CommandLine()->FindParm( "-gameui" ) == 0 )
-	{
-		IBaseMenu->Refresh();
-	}
-#endif // AS_DLL
 
 	// string tables are cleared on disconnect from a server, so reset our global pointers to NULL
 	ResetStringTablePointers();

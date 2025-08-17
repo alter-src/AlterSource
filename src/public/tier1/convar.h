@@ -136,7 +136,8 @@ public:
 	// Returns the DLL identifier
 	virtual CVarDLLIdentifier_t	GetDLLIdentifier() const;
 
-protected:
+// ThePixelMoon: WHYYYYYYYY
+public:
 	virtual void				CreateBase( const char *pName, const char *pHelpString = 0, 
 									int flags = 0 );
 

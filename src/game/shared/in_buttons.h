@@ -37,5 +37,8 @@
 #define IN_GRENADE1		(1 << 23)	// grenade 1
 #define IN_GRENADE2		(1 << 24)	// grenade 2
 #define	IN_ATTACK3		(1 << 25)
+#ifdef AS_DLL
+#define IN_VALIDVGUIINPUT		    (1 << 23) // bitflag for vgui fix
+#endif // AS_DLL
 
 #endif // IN_BUTTONS_H

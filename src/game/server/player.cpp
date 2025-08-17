@@ -74,6 +74,10 @@
 #include "econ_wearable.h"
 #endif
 
+#ifdef AS_DLL
+#include "vguiscreen.h"
+#endif // AS_DLL
+
 // NVNT haptic utils
 #include "haptics/haptic_utils.h"
 
@@ -6922,6 +6926,52 @@ bool CBasePlayer::ClientCommand( const CCommand &args )
 	else if ( stricmp( cmd, "vguimode_false" ) == 0 )
 	{
 		SetVGUImode( false );
+		return true;
+	}
+	if ( strnicmp( cmd, "out", 3 ) == 0 )
+	{
+		int outputNum = V_atoi( cmd + 3 );
+		if ( outputNum < 1 || outputNum > 16 )
+		{
+			Warning( "Invalid output number (must be 1..16)\n" );
+			return false;
+		}
+
+		int entindex = V_atoi( args[1] );
+		if ( !entindex )
+		{
+			Warning( "No ent index specified for VGUI output\n" );
+			return false;
+		}
+
+		IHandleEntity* hEnt = gEntList.LookupEntityByNetworkIndex( entindex );
+		if ( !hEnt )
+			return false;
+
+		CBaseEntity* ent = (CBaseEntity*)gEntList.LookupEntity( hEnt->GetRefEHandle() );
+		if ( !ent )
+			return false;
+
+		CVGuiScreen* screen = static_cast<CVGuiScreen*>( ent );
+		if ( !screen )
+			return false;
+
+		if ( screen->entindex() != entindex )
+			return false;
+
+		// table of pointers-to-member for Output1..Output16
+		static COutputEvent CVGuiScreen::* outputs[] = {
+			&CVGuiScreen::Output1,  &CVGuiScreen::Output2,
+			&CVGuiScreen::Output3,  &CVGuiScreen::Output4,
+			&CVGuiScreen::Output5,  &CVGuiScreen::Output6,
+			&CVGuiScreen::Output7,  &CVGuiScreen::Output8,
+			&CVGuiScreen::Output9,  &CVGuiScreen::Output10,
+			&CVGuiScreen::Output11, &CVGuiScreen::Output12,
+			&CVGuiScreen::Output13, &CVGuiScreen::Output14,
+			&CVGuiScreen::Output15, &CVGuiScreen::Output16
+		};
+
+		( screen->*outputs[ outputNum - 1 ] ).FireOutput( this, NULL );
 		return true;
 	}
 #endif // AS_DLL

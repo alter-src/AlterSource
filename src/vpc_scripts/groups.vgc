@@ -27,6 +27,7 @@ $Group "game"
 
 	//-- AS
 	"game_shader_generic_example"
+	"gamepadui"
 	//-- end AS
 }
 
@@ -65,6 +66,10 @@ $Group "everything"
 	"vvis_launcher"
 
 	"game_shader_generic_example"
+
+	//-- AS
+	"gamepadui"
+	//-- end AS
 
 	// You probably don't want to override all shaders by default.
 	// This is just an example mainly! Pick and choose what you want from this project. :D

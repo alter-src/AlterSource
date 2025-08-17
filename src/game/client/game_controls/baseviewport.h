@@ -85,6 +85,14 @@ public:
 	// Check if the named panel is visible
 	virtual bool IsPanelVisible( const char* panel );
 	
+#ifdef AS_DLL
+	void StartMainMenuVideo();
+	void StopMainMenuVideo();
+
+private:
+	class CMainMenu *m_pMainMenuPanel;
+#endif // AS_DLL
+
 public: // IGameEventListener:
 	virtual void FireGameEvent( IGameEvent * event);
 
