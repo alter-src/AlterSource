@@ -235,7 +235,7 @@ bool CMainMenu::BeginPlayback(const char* pFilename)
 
 	m_VideoMaterial->SetLooping(true);
 
-#ifdef WINDOWS
+#ifdef _WIN32
 	IVideoPlayer* player = *reinterpret_cast<IVideoPlayer**>( (intptr_t)(m_VideoMaterial) + 0x128 );
 #else
 	IVideoPlayer* player = *reinterpret_cast<IVideoPlayer**>( (intptr_t)(m_VideoMaterial) + 0xd8 );
