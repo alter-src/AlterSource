@@ -104,7 +104,7 @@ DESCRIPTION SERVER_OPTIONS
 		{ "0" }
 	}
 
-	"as_allow_noclip"
+	"sv_allow_noclip"
 	{
 		"#Alter_AllowNoclip"
 		{ BOOL }

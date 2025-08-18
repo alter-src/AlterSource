@@ -419,6 +419,11 @@ void CHL2MP_Player::Spawn(void)
 #ifdef AS_DLL
 	m_cycleLatchTimer.Start( CYCLELATCH_UPDATE_INTERVAL );
 #endif // AS_DLL
+
+#ifdef HAS_LUA
+	CBasePlayer* ply = ToBasePlayer(this);
+	GAMEMODE_HOOK("Spawn", 1, 4, ply);
+#endif // HAS_LUA
 }
 
 bool CHL2MP_Player::ValidatePlayerModel( const char *pModel )

@@ -19,18 +19,28 @@ function GM:GiveDefaultItems( ply )
     ply:GiveAmmo(1, "grenade")
     ply:GiveAmmo(2, "slam")
 
-    ply:GiveWeapon("weapon_crowbar")
-    ply:GiveWeapon("weapon_stunstick")
-    ply:GiveWeapon("weapon_pistol")
-    ply:GiveWeapon("weapon_357")
-    ply:GiveWeapon("weapon_smg1")
-    ply:GiveWeapon("weapon_ar2")
-    ply:GiveWeapon("weapon_shotgun")
-    ply:GiveWeapon("weapon_frag")
-    ply:GiveWeapon("weapon_crossbow")
-    ply:GiveWeapon("weapon_rpg")
-    ply:GiveWeapon("weapon_slam")
-    ply:GiveWeapon("weapon_physcannon")
+    ply:GiveItem("weapon_crowbar")
+    ply:GiveItem("weapon_stunstick")
+    ply:GiveItem("weapon_pistol")
+    ply:GiveItem("weapon_357")
+    ply:GiveItem("weapon_smg1")
+    ply:GiveItem("weapon_ar2")
+    ply:GiveItem("weapon_shotgun")
+    ply:GiveItem("weapon_frag")
+    ply:GiveItem("weapon_crossbow")
+    ply:GiveItem("weapon_rpg")
+    ply:GiveItem("weapon_slam")
+    ply:GiveItem("weapon_physcannon")
 
-   	ply:GiveWeapon("weapon_physgun")
+   	ply:GiveItem("weapon_physgun")
+end
+
+function GM:Spawn( ply )
+	if not ply then
+        print("Player is nil!")
+        return
+    end
+
+	-- ThePixelMoon: after we spawn, just give ourselves 100 armor because why not
+	ply:SetArmor(100)
 end

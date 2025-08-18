@@ -52,6 +52,8 @@ $Project "Client (Alter)"
 			{
 				$File "$SRCDIR\game\shared\lua\handle.cpp"
 				$File "$SRCDIR\game\shared\lua\handle.h"
+				$File "$SRCDIR\game\shared\lua\lua_angle.cpp"
+				$File "$SRCDIR\game\shared\lua\lua_angle.h"
 			}
 
 			$File	"altersrc\fx_cs_weaponfx.cpp"

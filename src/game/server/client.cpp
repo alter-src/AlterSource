@@ -1169,7 +1169,7 @@ void EnableNoClip( CBasePlayer *pPlayer )
 }
 
 #ifdef AS_DLL
-static ConVar as_allow_noclip( "as_allow_noclip", "0", FCVAR_NOTIFY );
+static ConVar as_allow_noclip( "sv_allow_noclip", "0", FCVAR_NOTIFY );
 #endif // AS_DLL
 
 void CC_Player_NoClip( void )

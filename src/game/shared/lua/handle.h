@@ -29,6 +29,7 @@ enum ScriptType
 	SCRIPTTYPE_FILE,
 	SCRIPTTYPE_FOLDER,
 	SCRIPTTYPE_GAMEMODE,
+	SCRIPTTYPE_STRING,
 
 	SCRIPTTYPE_LAST
 };
@@ -53,7 +54,8 @@ public:
 	bool DoScript( ScriptType scripttype, const char *scriptpath );
 
 	lua_State *getState() const { return L; }
-
+    bool DoString( const char *code, const char *chunkname = "console" );
+	
 	// ThePixelMoon: why..
 	bool CallGMHook( const char* hookName, int numArgs, ... )
 	{

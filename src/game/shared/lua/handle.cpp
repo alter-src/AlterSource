@@ -10,6 +10,7 @@
 #include "filesystem.h"
 #include "tier1/convar.h" // THePixelMoon: SHUT UP, INTELLISENSE!
 
+#include "lua_angle.h"
 #ifdef GAME_DLL
 #include "lua_baseplayer.h"
 #else
@@ -24,9 +25,16 @@ ConVar sv_gamemode(
     "Sets the current server gamemode"
 );
 
-static int lua_msgprint(lua_State* L)
+ConVar sv_allow_clientside_lua(
+    "sv_allow_clientside_lua",
+    "1", // ThePixelMoon: server admins can set this to 0
+    /*FCVAR_ARCHIVE |*/ FCVAR_NOTIFY | FCVAR_REPLICATED,
+    "Allow clients to execute clientside Lua"
+);
+
+static int lua_msgprint( lua_State* L )
 {
-    int nargs = lua_gettop(L);
+    int nargs = lua_gettop( L );
     std::string out;
     out.reserve( 128 );
 
@@ -49,8 +57,8 @@ static int lua_msgprint(lua_State* L)
 }
 
 static const luaL_Reg lua_basefuncs[] = {
-    {"print", lua_msgprint},
-    {NULL, NULL} // sentinel
+    { "print", lua_msgprint },
+    { NULL, NULL } // sentinel
 };
 
 LuaHandle::LuaHandle()
@@ -77,6 +85,8 @@ bool LuaHandle::Initialize()
     luaL_openlibs( L );
 	luaL_register( L, "_G", lua_basefuncs );
 
+	Lua_RegisterVector( L );
+	Lua_RegisterQAngle( L );
 #ifdef GAME_DLL
 	LuaBasePlayer_Register( L );
 #else
@@ -85,12 +95,40 @@ bool LuaHandle::Initialize()
 	return true;
 }
 
+bool LuaHandle::DoString( const char *code, const char *chunkname )
+{
+    if ( !L || !code )
+        return false;
+
+    int status = luaL_loadbuffer( L, code, Q_strlen( code ), chunkname );
+    if ( status != 0 )
+    {
+        const char *err = lua_tostring( L, -1 );
+        Warning( "Lua load error: %s\n", err ? err : "(unknown)" );
+        lua_pop( L, 1 );
+        return false;
+    }
+
+    status = lua_pcall( L, 0, 0, 0 );
+    if ( status != 0 )
+    {
+        const char *err = lua_tostring( L, -1 );
+        Warning( "Lua runtime error: %s\n", err ? err : "(unknown)" );
+        lua_pop( L, 1 );
+        return false;
+    }
+
+    return true;
+}
+
+// ThePixelMoon: scriptpath can also mean the Lua string if it's a string
 bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 {
 	switch (scripttype)
 	{
 		case SCRIPTTYPE_FOLDER:
 		{
+			// TODO: add folder scripts
 			break;
 		}
 		case SCRIPTTYPE_GAMEMODE:
@@ -128,12 +166,92 @@ bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 			break;
 		}
 
+		case SCRIPTTYPE_STRING:
+		{
+			// TODO: add lua strings
+			break;
+		}
+
 		// ThePixelMoon: the default is file
 		default:
 		{
+			// TODO: add file scripts
 			break;
 		}
 	}
 
 	return true;
 }
+
+#ifdef GAME_DLL
+
+static void CC_SV_Lua_DoStr( const CCommand &args )
+{
+    if ( !UTIL_IsCommandIssuedByServerAdmin() )
+    {
+        Warning( "sv_lua_dostr: access denied, server admin only.\n" );
+        return;
+    }
+
+    if ( !g_pLuaHandle || !g_pLuaHandle->getState() )
+    {
+        Warning( "sv_lua_dostr: Lua not initialized\n" );
+        return;
+    }
+
+    if ( args.ArgC() < 2 )
+    {
+        Msg( "usage: sv_lua_dostr <lua code>\n" );
+        return;
+    }
+
+    const char *code = args.ArgS(); // everything after the command name
+    if ( !g_pLuaHandle->DoString( code, "sv_lua_dostr" ) )
+    {
+        Warning( "sv_lua_dostr: execution failed\n" );
+    }
+}
+
+static ConCommand sv_lua_dostr(
+    "sv_lua_dostr",
+    CC_SV_Lua_DoStr,
+    "Execute a Lua string on the SERVER",
+    FCVAR_GAMEDLL
+);
+
+#else
+
+static void CC_CL_Lua_DoStr( const CCommand &args )
+{
+    if ( !sv_allow_clientside_lua.GetBool() )
+    {
+        Warning( "cl_lua_dostr: disabled by server (sv_allow_clientside_lua 0)\n" );
+        return;
+    }
+
+    if ( !g_pLuaHandle || !g_pLuaHandle->getState() )
+    {
+        Warning( "cl_lua_dostr: Lua not initialized\n" );
+        return;
+    }
+
+    if ( args.ArgC() < 2 )
+    {
+        Msg( "usage: cl_lua_dostr <lua code>\n" );
+        return;
+    }
+
+    const char *code = args.ArgS();
+    if ( !g_pLuaHandle->DoString( code, "cl_lua_dostr" ) )
+    {
+        Warning( "cl_lua_dostr: execution failed\n" );
+    }
+}
+
+static ConCommand cl_lua_dostr(
+    "cl_lua_dostr",
+    CC_CL_Lua_DoStr,
+    "Execute a Lua string on the CLIENT (server must allow: sv_allow_clientside_lua 1)"
+);
+
+#endif // GAME_DLL
