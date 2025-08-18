@@ -1,7 +1,7 @@
 # Alter Source
 
 > [!WARNING]
-> This project is in heavy works. At the current state of 8/12/25, it's only 3% complete.
+> This project is in heavy works. At the current state of 8/18/25, it's only 10% complete.
 
 ## Building
 To build, you NEED to have *Steam*. That's all for global.
