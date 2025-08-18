@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#include "cbase.h"
 #include "handle.h"
 #include "filesystem.h"
 #include "tier1/convar.h" // THePixelMoon: SHUT UP, INTELLISENSE!
