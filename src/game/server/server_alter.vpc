@@ -14,8 +14,8 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\hl2mp,$SRCDIR\game\shared\hl2mp,$SRCDIR\game\shared\altersrc,.\altersrc"
-		$PreprocessorDefinitions		"$BASE;HL2MP;HL2_DLL;NEXT_BOT;AS_DLL"
+		$AdditionalIncludeDirectories	"$BASE;$SRCDIR\game\shared\hl2,.\hl2,.\hl2mp,$SRCDIR\game\shared\hl2mp,$SRCDIR\game\shared\altersrc,.\altersrc,.\lua,$SRCDIR\game\shared\lua"
+		$PreprocessorDefinitions		"$BASE;HL2MP;HL2_DLL;NEXT_BOT;AS_DLL;HAS_LUA"
 	}
 }
 
@@ -62,11 +62,21 @@ $Project "Server (HL2MP)"
 
 		$Folder "Alter DLL"
 		{
+			$Folder "Lua"
+			{
+				$File "$SRCDIR\game\shared\lua\handle.cpp"
+				$File "$SRCDIR\game\shared\lua\handle.h"
+				$File "lua\lua_baseplayer.cpp"
+				$File "lua\lua_baseplayer.h"
+			}
+
 			$File 	"altersrc\logic_playmovie.cpp"
 			$File 	"altersrc\movie_display.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
 		}
 
 		$Folder "NextBot"
@@ -367,4 +377,10 @@ $Project "Server (HL2MP)"
 			}
 		}
 	}
+
+    $Folder "Link Libraries"
+    {
+		$Libexternal liblua5.1 [$LINUXALL]
+		$Libexternal lua5.1 [$WINDOWS]
+    }
 }

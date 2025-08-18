@@ -155,6 +155,10 @@
 #include "menu_background.h"
 #endif // AS_DLL
 
+#ifdef HAS_LUA
+#include "handle.h"
+#endif // HAS_LUA
+
 extern vgui::IInputInternal *g_InputInternal;
 
 //=============================================================================
@@ -1240,6 +1244,11 @@ void CHLClient::PostInit()
 	
 	SwapDisconnectCommand();
 #endif // AS_DLL
+
+#ifdef HAS_LUA
+	g_pLuaHandle = new LuaHandle();
+	g_pLuaHandle->Initialize();
+#endif // HAS_LUA
 
 #if defined(GAMEPADUI)
 	if ( IsGamepadUI() )

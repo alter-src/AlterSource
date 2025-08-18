@@ -116,6 +116,10 @@ extern ConVar tf_mm_servermode;
 #include "mountlogic.h"
 #endif // AS_DLL
 
+#ifdef HAS_LUA
+#include "handle.h"
+#endif // HAS_LUA
+
 #ifdef USES_ECON_ITEMS
 #include "econ_item_system.h"
 #endif // USES_ECON_ITEMS
@@ -977,6 +981,14 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 
 	g_flServerCurTime = gpGlobals->curtime;
 
+#ifdef HAS_LUA
+	g_pLuaHandle = new LuaHandle();
+	g_pLuaHandle->Initialize();
+
+	ConVar *sv_gamemode = cvar->FindVar( "sv_gamemode" );
+	g_pLuaHandle->DoScript( SCRIPTTYPE_GAMEMODE, sv_gamemode->GetString() );
+#endif // HAS_LUA
+
 #ifdef USES_ECON_ITEMS
 	GameItemSchema_t *pItemSchema = ItemSystem()->GetItemSchema();
 	if ( pItemSchema )
@@ -1084,7 +1096,7 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 	// Sometimes an ent will Remove() itself during its precache, so RemoveImmediate won't happen.
 	// This makes sure those ents get cleaned up.
 	gEntList.CleanupDeleteList();
-
+	
 	g_AIFriendliesTalkSemaphore.Release();
 	g_AIFoesTalkSemaphore.Release();
 	g_OneWayTransition = false;

@@ -231,22 +231,15 @@ void CBaseViewport::OnScreenSizeChanged(int iOldWide, int iOldTall)
 	vgui::ipanel()->MoveToBack( m_pBackGround->GetVPanel() ); // really send it to the back 
 #endif
 
-	// hide all panels when reconnecting 
-	ShowPanel( PANEL_ALL, false );
-
 #ifdef AS_DLL
-	bool bRestartMainMenuVideo = false;
-
-	if ( m_pMainMenuPanel )
-		bRestartMainMenuVideo = m_pMainMenuPanel->IsVideoPlaying();
-
 	m_pMainMenuPanel = new CMainMenu( NULL, NULL );
 	m_pMainMenuPanel->SetZPos( 500 );
 	m_pMainMenuPanel->SetVisible( false );
-
-	if ( bRestartMainMenuVideo )
-		m_pMainMenuPanel->StartVideo();
+	m_pMainMenuPanel->StartVideo();
 #endif // AS_DLL
+
+	// hide all panels when reconnecting 
+	ShowPanel( PANEL_ALL, false );
 
 	// re-enable the spectator gui if it was previously visible
 	if ( bSpecGuiWasVisible )

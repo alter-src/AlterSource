@@ -550,4 +550,7 @@ game_shader_generic_example.so
 soundscape_maker.txt
 artwork/
 
+!src/lib/public/x64/
+!src/lib/public/x64/lua5.1.lib
+
 #-- end AS

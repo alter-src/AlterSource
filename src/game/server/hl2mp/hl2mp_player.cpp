@@ -27,6 +27,9 @@
 #include "SoundEmitterSystem/isoundemittersystembase.h"
 
 #include "ilagcompensationmanager.h"
+#ifdef HAS_LUA
+#include "handle.h"
+#endif // HAS_LUA
 
 int g_iLastCitizenModel = 0;
 int g_iLastCombineModel = 0;
@@ -301,10 +304,16 @@ void CHL2MP_Player::GiveDefaultItems( void )
 	{
 		Weapon_Switch( Weapon_OwnsThisType( "weapon_physcannon" ) );
 	}
-#else
-	// TODO: change this when lua gets added
-	GiveAllItems();
 #endif // AS_DLL
+
+#ifdef AS_DLL
+	EquipSuit();
+#endif // AS_DLL
+
+#ifdef HAS_LUA
+	CBasePlayer* ply = ToBasePlayer(this);
+	GAMEMODE_HOOK("GiveDefaultItems", 1, 4, ply);
+#endif // HAS_LUA
 }
 
 void CHL2MP_Player::PickDefaultSpawnTeam( void )
@@ -414,6 +423,7 @@ void CHL2MP_Player::Spawn(void)
 
 bool CHL2MP_Player::ValidatePlayerModel( const char *pModel )
 {
+#ifndef AS_DLL
 	int iModels = ARRAYSIZE( g_ppszRandomCitizenModels );
 	int i;	
 
@@ -436,6 +446,10 @@ bool CHL2MP_Player::ValidatePlayerModel( const char *pModel )
 	}
 
 	return false;
+#else
+	PrecacheModel( pModel );
+	return true;
+#endif // AS_DLL
 }
 
 #ifdef AS_DLL

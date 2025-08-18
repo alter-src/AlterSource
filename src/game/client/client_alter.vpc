@@ -13,8 +13,8 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories		"$BASE;hl2mp\ui,.\hl2mp,$SRCDIR\game\shared\hl2mp,.\hl2,.\hl2\elements,$SRCDIR\game\shared\hl2,$SRCDIR\game\shared\altersrc,.\altersrc,$SRCDIR\thirdparty\ultralight\include"
-		$PreprocessorDefinitions			"$BASE;HL2MP;HL2_CLIENT_DLL;NEXT_BOT;AS_DLL;GAMEPADUI"
+		$AdditionalIncludeDirectories		"$BASE;hl2mp\ui,.\hl2mp,$SRCDIR\game\shared\hl2mp,.\hl2,.\hl2\elements,$SRCDIR\game\shared\hl2,$SRCDIR\game\shared\altersrc,.\altersrc,.\lua,$SRCDIR\game\shared\lua"
+		$PreprocessorDefinitions			"$BASE;HL2MP;HL2_CLIENT_DLL;NEXT_BOT;AS_DLL;GAMEPADUI;HAS_LUA"
 	}
 }
 
@@ -48,6 +48,12 @@ $Project "Client (Alter)"
 
 		$Folder "Alter DLL"
 		{
+			$Folder "Lua"
+			{
+				$File "$SRCDIR\game\shared\lua\handle.cpp"
+				$File "$SRCDIR\game\shared\lua\handle.h"
+			}
+
 			$File	"altersrc\fx_cs_weaponfx.cpp"
 			$File	"altersrc\vgui_movie_display.cpp"
 			$File	"altersrc\c_movie_display.cpp"
@@ -59,6 +65,8 @@ $Project "Client (Alter)"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
 			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.cpp"
+			$File	"$SRCDIR\game\shared\Multiplayer\multiplayer_animstate.h"
 		}
 
 		$Folder	"HL2 DLL"
@@ -197,4 +205,10 @@ $Project "Client (Alter)"
 			}
 		}
 	}
+
+    $Folder "Link Libraries"
+    {
+		$Libexternal liblua5.1 [$LINUXALL]
+		$Libexternal lua5.1 [$WINDOWS]
+    }
 }

@@ -44,6 +44,11 @@ CMainMenu::CMainMenu(vgui::Panel* parent, const char* pElementName) : vgui::Pane
 	m_nPlaybackWidth = 0;
 	m_nPlaybackHeight = 0;
 
+	m_flU = 0.0f;
+    m_flV = 0.0f;
+    m_bPaintVideo = false;
+    m_bAllowAlternateMedia = true;
+
 	m_bToolsMode = false;
 	m_bLoaded = false;
 }
@@ -124,8 +129,13 @@ void CMainMenu::Paint(void)
 		return;
 
 	// No video to play, so do nothing
-	if (m_VideoMaterial == NULL)
-		return;
+    if (m_VideoMaterial == NULL)
+    {
+        // ThePixelMoon: just draw a black background
+        vgui::surface()->DrawSetColor(0, 0, 0, 255);
+        vgui::surface()->DrawFilledRect(0, 0, GetWide(), GetTall());
+        return;
+    }
 
 	// Update our frame
 	if (m_VideoMaterial->Update() == false)
@@ -225,9 +235,14 @@ bool CMainMenu::BeginPlayback(const char* pFilename)
 	}
 
 	// Create new Video material
-	m_VideoMaterial = g_pVideo->CreateVideoMaterial("VideoMaterial", pFilename, "GAME",
-		VideoPlaybackFlags::DEFAULT_MATERIAL_OPTIONS,
-		VideoSystem::DETERMINE_FROM_FILE_EXTENSION, m_bAllowAlternateMedia);
+    static int videoMaterialCount = 0;
+    char materialName[64];
+    Q_snprintf(materialName, sizeof(materialName), "VideoMaterial_%d", ++videoMaterialCount);
+    
+    m_VideoMaterial = g_pVideo->CreateVideoMaterial(materialName, pFilename, "GAME",
+        VideoPlaybackFlags::DEFAULT_MATERIAL_OPTIONS,
+        VideoSystem::DETERMINE_FROM_FILE_EXTENSION, m_bAllowAlternateMedia);
+	
 	if (m_VideoMaterial == NULL)
 		return false;
 
