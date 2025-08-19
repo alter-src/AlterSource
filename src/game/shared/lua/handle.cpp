@@ -56,8 +56,31 @@ static int lua_msgprint( lua_State* L )
     return 0; // number of Lua return values
 }
 
+static int lua_include(lua_State* L)
+{
+    const char* filename = lua_tostring(L, 1);
+    if (!filename)
+    {
+        lua_pushstring(L, "include: missing filename");
+        lua_error(L);
+        return 0;
+    }
+
+    char fullPath[MAX_PATH];
+    Q_snprintf(fullPath, sizeof(fullPath), "scripts/lua/%s", filename);
+
+    if (!g_pLuaHandle->DoScript(SCRIPTTYPE_FILE, fullPath))
+    {
+        lua_pushfstring(L, "include: failed to load '%s'", fullPath);
+        lua_error(L);
+    }
+
+    return 0; // number of Lua return values
+}
+
 static const luaL_Reg lua_basefuncs[] = {
     { "print", lua_msgprint },
+	{ "include", lua_include },
     { NULL, NULL } // sentinel
 };
 
@@ -92,6 +115,24 @@ bool LuaHandle::Initialize()
 #else
 #endif // GAME_DLL
 
+	// global flags
+#ifdef GAME_DLL
+	lua_pushboolean( L, 1 );
+	lua_setglobal( L, "IS_SERVER" );
+
+	lua_pushboolean( L, 0 );
+	lua_setglobal( L, "IS_CLIENT" );
+#else
+	lua_pushboolean( L, 0 );
+	lua_setglobal( L, "IS_SERVER" );
+
+	lua_pushboolean( L, 1 );
+	lua_setglobal( L, "IS_CLIENT" );
+#endif
+
+    lua_newtable( L );
+    lua_setglobal( L, "GM" );
+
 	return true;
 }
 
@@ -121,6 +162,157 @@ bool LuaHandle::DoString( const char *code, const char *chunkname )
     return true;
 }
 
+bool LuaHandle::CallHookInternal( lua_State *L, const char *tableName, const char *hookName, int numArgs, bool stopOnFalse, va_list args )
+{
+    lua_getglobal(L, tableName); // stack: table?
+    if (!lua_istable(L, -1))
+    {
+        lua_pop(L, 1);
+        return true; // no Hooks table -> allow
+    }
+
+    lua_getfield(L, -1, hookName); // stack: table, Hooks[hookName]?
+    if (lua_isnil(L, -1))
+    {
+        lua_pop(L, 2);
+        return true; // no hook registered -> allow
+    }
+
+    auto push_args = [&](va_list vargs) {
+        for (int i = 0; i < numArgs; ++i)
+        {
+            int type = va_arg(vargs, int);
+            if (type == 0) // int
+            {
+                int val = va_arg(vargs, int);
+                lua_pushinteger(L, val);
+            }
+            else if (type == 1) // const char*
+            {
+                const char* val = va_arg(vargs, const char*);
+                lua_pushstring(L, val);
+            }
+            else if (type == 2) // double
+            {
+                double val = va_arg(vargs, double);
+                lua_pushnumber(L, val);
+            }
+            else if (type == 3) // bool (promoted to int)
+            {
+                int val = va_arg(vargs, int);
+                lua_pushboolean(L, val);
+            }
+#ifdef GAME_DLL
+            else if (type == 4) // CBasePlayer*
+            {
+                CBasePlayer* player = va_arg(vargs, CBasePlayer*);
+                PushPlayer(L, player);
+            }
+#endif
+            else
+            {
+                // unknown type, push nil to keep stack aligned
+                lua_pushnil(L);
+            }
+        }
+    };
+
+    if (lua_isfunction(L, -1))
+    {
+        lua_pushvalue(L, -1); // copy function
+        va_list args_copy;
+        va_copy(args_copy, args);
+        push_args(args_copy);
+        va_end(args_copy);
+
+        int retCount = stopOnFalse ? 1 : 0;
+        if (lua_pcall(L, numArgs, retCount, 0) != LUA_OK)
+        {
+            const char *err = lua_tostring(L, -1);
+            Warning("Hook '%s' runtime error: %s\n", hookName, err ? err : "(unknown)");
+            lua_pop(L, 1); // pop error
+            lua_pop(L, 2); // pop original value and Hooks table
+            return true; // treat runtime errors as "don't block"
+        }
+
+        if (retCount == 1)
+        {
+            bool result = lua_toboolean(L, -1);
+            lua_pop(L, 1); // pop return value
+            lua_pop(L, 2); // pop original value and Hooks
+            return result;
+        }
+
+        lua_pop(L, 1); // pop original value
+        lua_pop(L, 1); // pop Hooks table
+        return true;
+    }
+
+    // If the hook is a table, iterate functions inside it
+    if (lua_istable(L, -1))
+    {
+        lua_pushnil(L); // first key for lua_next
+        while (lua_next(L, -2) != 0)
+        {
+            // stack: table, table[hookName], key, value
+            if (lua_isfunction(L, -1))
+            {
+                lua_pushvalue(L, -1); // copy function for call
+                va_list args_copy;
+                va_copy(args_copy, args);
+                push_args(args_copy);
+                va_end(args_copy);
+
+                int retCount = stopOnFalse ? 1 : 0;
+                if (lua_pcall(L, numArgs, retCount, 0) != LUA_OK)
+                {
+                    const char* err = lua_tostring(L, -1);
+                    Warning("Hook '%s' runtime error: %s\n", hookName, err ? err : "(unknown)");
+                    lua_pop(L, 1); // pop error
+                    lua_pop(L, 1); // pop original value
+                    continue; // proceed to next function
+                }
+
+                if (retCount == 1)
+                {
+                    bool result = lua_toboolean(L, -1);
+                    lua_pop(L, 1); // pop return value
+                    lua_pop(L, 1); // pop original value
+                    if (!result)
+                    {
+                        lua_pop(L, 2); // pop table[hookName] and table
+                        return false;
+                    }
+                }
+                else
+                {
+                    lua_pop(L, 1); // pop original value
+                }
+            }
+            else
+            {
+                lua_pop(L, 1); // not a function, pop value
+            }
+        }
+
+        lua_pop(L, 2); // pop table[hookName] and Hooks table
+        return true;
+    }
+
+    // anything else (number/string/etc) -> allow
+    lua_pop(L, 2);
+    return true;
+}
+
+bool LuaHandle::CallGMHook( const char *hookName, int numArgs, ... )
+{
+	va_list args;
+	va_start( args, numArgs );
+	bool result = CallHookInternal( L, "GM", hookName, numArgs, false, args );
+	va_end( args );
+	return result;
+}
+
 // ThePixelMoon: scriptpath can also mean the Lua string if it's a string
 bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 {
@@ -128,13 +320,89 @@ bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 	{
 		case SCRIPTTYPE_FOLDER:
 		{
-			// TODO: add folder scripts
+			char searchPath[ MAX_PATH ];
+			Q_snprintf( searchPath, sizeof( searchPath ), "%s/*.lua", scriptpath );
+
+			FileFindHandle_t findHandle;
+			const char *filename = g_pFullFileSystem->FindFirstEx( searchPath, "MOD", &findHandle );
+
+			if ( !filename )
+			{
+				Warning( "Lua folder '%s' not found or empty\n", scriptpath );
+				return false;
+			}
+
+			CUtlVector< char * > files;
+
+			// collect all files
+			do
+			{
+				if ( filename[0] == '.' ) // skip '.' and '..'
+					continue;
+
+				char *copy = strdup( filename );
+				files.AddToTail( copy );
+			}
+			while ( ( filename = g_pFullFileSystem->FindNext( findHandle ) ) != nullptr );
+
+			g_pFullFileSystem->FindClose( findHandle );
+
+			for ( int i = 1; i < files.Count(); ++i )
+			{
+				char *key = files[i];
+				int j = i - 1;
+				while ( j >= 0 && Q_stricmp( files[j], key ) > 0 )
+				{
+					files[j + 1] = files[j];
+					--j;
+				}
+				files[j + 1] = key;
+			}
+
+			bool success = true;
+
+			for ( int i = 0; i < files.Count(); ++i )
+			{
+				char fullPath[ MAX_PATH ];
+				Q_snprintf( fullPath, sizeof( fullPath ), "%s/%s", scriptpath, files[i] );
+
+				FileHandle_t file = g_pFullFileSystem->Open( fullPath, "rb", "MOD" );
+				if ( file == FILESYSTEM_INVALID_HANDLE )
+				{
+					Warning( "Failed to open Lua file '%s'\n", fullPath );
+					success = false;
+					continue;
+				}
+
+				int fileSize = g_pFullFileSystem->Size( file );
+				char *buffer = new char[ fileSize + 1 ];
+				g_pFullFileSystem->Read( buffer, fileSize, file );
+				buffer[fileSize] = '\0';
+				g_pFullFileSystem->Close( file );
+
+				if ( luaL_loadbuffer( L, buffer, fileSize, fullPath ) != LUA_OK || lua_pcall( L, 0, 0, 0 ) != LUA_OK )
+				{
+					const char *err = lua_tostring( L, -1 );
+					Warning( "Failed to load Lua script '%s': %s\n", fullPath, err ? err : "(unknown)" );
+					lua_pop( L, 1 );
+					success = false;
+				}
+				else
+				{
+					DevMsg( "Loaded Lua file: %s\n", fullPath );
+				}
+
+				delete[] buffer;
+				free( files[i] );
+			}
+
+			files.Purge();
 			break;
 		}
 		case SCRIPTTYPE_GAMEMODE:
 		{
 			char fullPath[ MAX_PATH ];
-			Q_snprintf( fullPath, sizeof(fullPath), "gamemodes/%s.lua", scriptpath );
+			Q_snprintf( fullPath, sizeof(fullPath), "scripts/lua/gamemodes/%s.lua", scriptpath );
 
 			lua_newtable(L);
 			lua_setglobal(L, "GM");
@@ -168,14 +436,37 @@ bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 
 		case SCRIPTTYPE_STRING:
 		{
-			// TODO: add lua strings
+			DoString( scriptpath, "console" );
 			break;
 		}
 
 		// ThePixelMoon: the default is file
 		default:
 		{
-			// TODO: add file scripts
+			FileHandle_t file = g_pFullFileSystem->Open( scriptpath, "rb", "MOD" );
+			if ( file == FILESYSTEM_INVALID_HANDLE )
+			{
+				Warning( "Failed to open Lua file '%s'\n", scriptpath );
+				return false;
+			}
+
+			int fileSize = g_pFullFileSystem->Size( file );
+			char *buffer = new char[ fileSize + 1 ];
+			g_pFullFileSystem->Read( buffer, fileSize, file );
+			buffer[fileSize] = '\0';
+			g_pFullFileSystem->Close( file );
+
+			if ( luaL_loadbuffer( L, buffer, fileSize, scriptpath ) != LUA_OK || lua_pcall( L, 0, 0, 0 ) != LUA_OK )
+			{
+				const char *err = lua_tostring( L, -1 );
+				Warning( "Failed to load Lua file '%s': %s\n", scriptpath, err ? err : "(unknown)" );
+				lua_pop( L, 1 );
+				delete[] buffer;
+				return false;
+			}
+
+			delete[] buffer;
+			DevMsg( "Lua file '%s' loaded successfully\n", scriptpath );
 			break;
 		}
 	}
@@ -184,7 +475,6 @@ bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 }
 
 #ifdef GAME_DLL
-
 static void CC_SV_Lua_DoStr( const CCommand &args )
 {
     if ( !UTIL_IsCommandIssuedByServerAdmin() )
@@ -220,7 +510,6 @@ static ConCommand sv_lua_dostr(
 );
 
 #else
-
 static void CC_CL_Lua_DoStr( const CCommand &args )
 {
     if ( !sv_allow_clientside_lua.GetBool() )
@@ -253,5 +542,4 @@ static ConCommand cl_lua_dostr(
     CC_CL_Lua_DoStr,
     "Execute a Lua string on the CLIENT (server must allow: sv_allow_clientside_lua 1)"
 );
-
 #endif // GAME_DLL

@@ -1248,6 +1248,8 @@ void CHLClient::PostInit()
 #ifdef HAS_LUA
 	g_pLuaHandle = new LuaHandle();
 	g_pLuaHandle->Initialize();
+
+	g_pLuaHandle->DoScript( SCRIPTTYPE_FOLDER, "scripts/lua/autorun/client" );
 #endif // HAS_LUA
 
 #if defined(GAMEPADUI)
@@ -1794,6 +1796,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	if (g_pGamepadUI != nullptr)
 		g_pGamepadUI->OnLevelInitializePreEntity();
 #endif // GAMEPADUI
+
+#ifdef HAS_LUA
+	// ThePixelMoon: autorun/ is basically shared
+	g_pLuaHandle->DoScript( SCRIPTTYPE_FOLDER, "scripts/lua/autorun" );
+#endif // HAS_LUA
 
 #if defined( REPLAY_ENABLED )
 	// Initialize replay ragdoll recorder

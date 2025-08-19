@@ -987,6 +987,11 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 
 	ConVar *sv_gamemode = cvar->FindVar( "sv_gamemode" );
 	g_pLuaHandle->DoScript( SCRIPTTYPE_GAMEMODE, sv_gamemode->GetString() );
+
+	g_pLuaHandle->DoScript( SCRIPTTYPE_FOLDER, "scripts/lua/autorun/server" );
+	
+	// ThePixelMoon: autorun/ is basically shared
+	g_pLuaHandle->DoScript( SCRIPTTYPE_FOLDER, "scripts/lua/autorun" );
 #endif // HAS_LUA
 
 #ifdef USES_ECON_ITEMS

@@ -422,7 +422,7 @@ void CHL2MP_Player::Spawn(void)
 
 #ifdef HAS_LUA
 	CBasePlayer* ply = ToBasePlayer(this);
-	GAMEMODE_HOOK("Spawn", 1, 4, ply);
+	GAMEMODE_HOOK("PlayerSpawn", 1, 4, ply);
 #endif // HAS_LUA
 }
 

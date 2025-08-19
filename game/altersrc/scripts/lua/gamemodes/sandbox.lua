@@ -1,7 +1,7 @@
 -- sandbox.lua
-GM = GM or {}
+include("include/hook.lua")
 
-function GM:GiveDefaultItems( ply )
+hook.Add("GiveDefaultItems", function(ply)
     if not ply then
         print("Player is nil!")
         return
@@ -33,9 +33,9 @@ function GM:GiveDefaultItems( ply )
     ply:GiveItem("weapon_physcannon")
 
    	ply:GiveItem("weapon_physgun")
-end
+end, true)
 
-function GM:Spawn( ply )
+hook.Add("PlayerSpawn", function(ply)
 	if not ply then
         print("Player is nil!")
         return
@@ -43,4 +43,4 @@ function GM:Spawn( ply )
 
 	-- ThePixelMoon: after we spawn, just give ourselves 100 armor because why not
 	ply:SetArmor(100)
-end
+end, true)

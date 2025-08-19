@@ -57,72 +57,8 @@ public:
     bool DoString( const char *code, const char *chunkname = "console" );
 	
 	// ThePixelMoon: why..
-	bool CallGMHook( const char* hookName, int numArgs, ... )
-	{
-		if (!L)
-			return false;
-
-		lua_getglobal(L, "GM");           // stack: GM
-		lua_getfield(L, -1, hookName);    // stack: GM, func
-
-		if (!lua_isfunction(L, -1))
-		{
-			lua_pop(L, 2); // pop nil + GM table
-			return false;
-		}
-
-		lua_pushvalue(L, -2); // stack: GM, func, GM(self)
-
-		va_list args;
-		va_start(args, numArgs);
-		for (int i = 0; i < numArgs; ++i)
-		{
-			int type = va_arg(args, int);
-			if (type == 0)
-			{
-				int val = va_arg(args, int);
-				lua_pushinteger(L, val);
-			}
-			else if (type == 1)
-			{
-				const char* val = va_arg(args, const char*);
-				lua_pushstring(L, val);
-			}
-			else if (type == 2)
-			{
-				double val = va_arg(args, double);
-				lua_pushnumber(L, val);
-			}
-			else if (type == 3)
-			{
-				bool val = va_arg(args, int); // bool promoted to int
-				lua_pushboolean(L, val);
-			}
-#ifdef GAME_DLL
-			else if (type == 4) // player
-			{
-				CBasePlayer* player = va_arg(args, CBasePlayer*);
-				PushPlayer(L, player); // pushes userdata with metatable
-			}
-#endif
-		}
-		va_end(args);
-
-		int totalArgs = numArgs + 1;
-
-		if (lua_pcall(L, totalArgs, 0, 0) != LUA_OK)
-		{
-			const char* err = lua_tostring(L, -1);
-			Warning("Lua hook '%s' error: %s\n", hookName, err);
-			lua_pop(L, 1);
-			lua_pop(L, 1); // pop GM table
-			return false;
-		}
-
-		// pop GM table (it was left on the stack by lua_getglobal at the start)
-		lua_pop(L, 1);
-		return true;
-	}
+	bool CallHookInternal( lua_State *L, const char *tableName, const char *hookName, int numArgs, bool stopOnFalse, va_list args );
+	bool CallGMHook( const char* hookName, int numArgs, ... );
 
 private:
 	lua_State *L;
