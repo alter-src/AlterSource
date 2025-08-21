@@ -26,6 +26,7 @@
 #ifdef AS_DLL
 #include <vgui_controls/Controls.h>
 #include "vgui_soundscape_maker.h"
+#include "addonsmenu.h"
 #endif // AS_DLL
 
 #ifdef SIXENSE
@@ -201,11 +202,15 @@ void VGui_CreateGlobalPanels( void )
 {
 	VPANEL gameToolParent = enginevgui->GetPanel( PANEL_CLIENTDLL_TOOLS );
 	VPANEL toolParent = enginevgui->GetPanel( PANEL_TOOLS );
+#ifdef AS_DLL
+	VPANEL gameParent = enginevgui->GetPanel( PANEL_CLIENTDLL );
+#endif // AS_DLL
 #if defined( TRACK_BLOCKING_IO )
 	VPANEL gameDLLPanel = enginevgui->GetPanel( PANEL_GAMEDLL );
 #endif
 #ifdef AS_DLL
 	g_SoundscapeMaker->Create( toolParent );
+	g_addonsMenu->Create( gameParent );
 #endif // AS_DLL
 	// Part of game
 	internalCenterPrint->Create( gameToolParent );
@@ -235,6 +240,7 @@ void VGui_Shutdown()
 
 #ifdef AS_DLL
 	g_SoundscapeMaker->Destroy();
+	g_addonsMenu->Destroy();
 #endif // AS_DLL
 
 #ifndef _X360

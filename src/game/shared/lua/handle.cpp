@@ -13,6 +13,7 @@
 #include "lua_angle.h"
 #ifdef GAME_DLL
 #include "lua_baseplayer.h"
+#include "lua_baseentity.h"
 #else
 #endif // GAME_DLL
 
@@ -111,6 +112,7 @@ bool LuaHandle::Initialize()
 	Lua_RegisterVector( L );
 	Lua_RegisterQAngle( L );
 #ifdef GAME_DLL
+	LuaBaseEntity_Register( L );
 	LuaBasePlayer_Register( L );
 #else
 #endif // GAME_DLL
@@ -313,6 +315,15 @@ bool LuaHandle::CallGMHook( const char *hookName, int numArgs, ... )
 	return result;
 }
 
+bool LuaHandle::CallHook( const char *hookName, int numArgs, ... )
+{
+	va_list args;
+	va_start( args, numArgs );
+	bool result = CallHookInternal( L, "Hooks", hookName, numArgs, true, args );
+	va_end( args );
+	return result;
+}
+
 // ThePixelMoon: scriptpath can also mean the Lua string if it's a string
 bool LuaHandle::DoScript( ScriptType scripttype, const char *scriptpath )
 {
@@ -505,7 +516,7 @@ static void CC_SV_Lua_DoStr( const CCommand &args )
 static ConCommand sv_lua_dostr(
     "sv_lua_dostr",
     CC_SV_Lua_DoStr,
-    "Execute a Lua string on the SERVER",
+    "Execute a Lua string on the SERVER (for server admins only)",
     FCVAR_GAMEDLL
 );
 
@@ -540,6 +551,6 @@ static void CC_CL_Lua_DoStr( const CCommand &args )
 static ConCommand cl_lua_dostr(
     "cl_lua_dostr",
     CC_CL_Lua_DoStr,
-    "Execute a Lua string on the CLIENT (server must allow: sv_allow_clientside_lua 1)"
+    "Execute a Lua string on the CLIENT (server must have sv_allow_clientside_lua set to 1)"
 );
 #endif // GAME_DLL

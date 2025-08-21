@@ -45,6 +45,10 @@
 #include "weapon_physcannon.h"
 #endif
 
+#ifdef HAS_LUA
+#include "handle.h"
+#endif // HAS_LUA
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -224,6 +228,16 @@ void Host_Say( edict_t *pEdict, const CCommand &args, bool teamonly )
 
 	if ( !p )
 		return;
+
+#ifdef HAS_LUA
+    bool allow = GENERAL_HOOK( "PlayerSay", 3,
+											4, pPlayer,    // CBasePlayer*
+											1, p,          // const char* (text)
+											3, (int)teamonly ); // bool -> int
+					
+	if ( !allow )
+		return;
+#endif // HAS_LUA
 
 	if ( pEdict )
 	{

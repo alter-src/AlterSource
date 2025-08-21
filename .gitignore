@@ -553,4 +553,8 @@ artwork/
 !src/lib/public/x64/
 !src/lib/public/x64/lua5.1.lib
 
+save/
+screenshots/
+addons/
+
 #-- end AS

@@ -2,6 +2,7 @@
 hook = hook or {}
 
 _G.GM    = _G.GM    or {}
+_G.Hooks = _G.Hooks or {}
 
 -- Add a hook.
 -- Usages supported:
@@ -14,7 +15,7 @@ function hook.Add(hookName, nameOrFunc, maybeFunc, maybeIsGM)
     if type(nameOrFunc) == "function" then
         local func = nameOrFunc
         local isGM = (type(maybeFunc) == "boolean" and maybeFunc) or (type(maybeIsGM) == "boolean" and maybeIsGM) or false
-        local t = isGM and _G.GM
+        local t = isGM and _G.GM or _G.Hooks
         t[hookName] = t[hookName] or {}
 
         -- insert as anonymous (numeric) entry
@@ -27,7 +28,7 @@ function hook.Add(hookName, nameOrFunc, maybeFunc, maybeIsGM)
         local uniqueName = nameOrFunc
         local func = maybeFunc
         local isGM = (type(maybeIsGM) == "boolean" and maybeIsGM) or false
-        local t = isGM and _G.GM
+        local t = isGM and _G.GM or _G.Hooks
         t[hookName] = t[hookName] or {}
 
         -- set or replace by string key
@@ -58,4 +59,5 @@ function hook.Call(hookName, ...)
 
     -- run gamemode hooks first (to match earlier behaviour)
     runHooks(_G.GM, ...)
+	runHooks(_G.Hooks, ...)
 end

@@ -11364,3 +11364,8 @@
 
 	input SetDisplayText(string) : "Sets the display text."
 ]
+
+@PointClass base(BasePropPhysics, RenderFields) studioprop() sphere(radius) = prop_sphere : "Creates a perfect sphere."
+[
+	radius(float) : "Radius" : 12 : ""
+]

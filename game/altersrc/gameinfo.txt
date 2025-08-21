@@ -21,8 +21,6 @@
 		
 		SearchPaths
 		{
-			game+mod			altersrc/custom/*
-
 			mod+mod_write		|gameinfo_path|.
 			game+game_write		|gameinfo_path|.
 			default_write_path	|gameinfo_path|.

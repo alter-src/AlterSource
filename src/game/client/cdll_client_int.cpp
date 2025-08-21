@@ -1241,6 +1241,7 @@ void CHLClient::PostInit()
 
 #ifdef AS_DLL
 	LoadGameMounts();
+	MountAddons();
 	
 	SwapDisconnectCommand();
 #endif // AS_DLL

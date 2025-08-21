@@ -59,6 +59,7 @@ public:
 	// ThePixelMoon: why..
 	bool CallHookInternal( lua_State *L, const char *tableName, const char *hookName, int numArgs, bool stopOnFalse, va_list args );
 	bool CallGMHook( const char* hookName, int numArgs, ... );
+	bool CallHook( const char *hookName, int numArgs, ... );
 
 private:
 	lua_State *L;
@@ -68,6 +69,9 @@ private:
 extern LuaHandle *g_pLuaHandle;
 
 // ThePixelMoon: okay, that's a bit cleaner
-#define GAMEMODE_HOOK(name, ...) g_pLuaHandle->CallGMHook(name, __VA_ARGS__)
+#define GENERAL_HOOK(name, ...) \
+    ( (g_pLuaHandle && g_pLuaHandle->getState()) ? g_pLuaHandle->CallHook((name), __VA_ARGS__) : true )
+#define GAMEMODE_HOOK(name, ...) \
+    ( (g_pLuaHandle && g_pLuaHandle->getState()) ? g_pLuaHandle->CallGMHook((name), __VA_ARGS__) : true )
 
 #endif // HANDLE_H

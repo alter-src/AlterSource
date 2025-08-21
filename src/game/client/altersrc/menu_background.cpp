@@ -131,7 +131,7 @@ void CMainMenu::Paint(void)
 	// No video to play, so do nothing
     if (m_VideoMaterial == NULL)
     {
-        // ThePixelMoon: just draw a black background
+        // ThePixelMoon: just draw a black background i guess
         vgui::surface()->DrawSetColor(0, 0, 0, 255);
         vgui::surface()->DrawFilledRect(0, 0, GetWide(), GetTall());
         return;

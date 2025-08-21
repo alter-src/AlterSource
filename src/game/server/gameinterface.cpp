@@ -762,6 +762,7 @@ void CServerGameDLL::PostInit()
 
 #ifdef AS_DLL
 	LoadGameMounts();
+	MountAddons();
 #endif // AS_DLL
 }
 

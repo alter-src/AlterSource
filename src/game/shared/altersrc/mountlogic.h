@@ -11,6 +11,17 @@
 #pragma once
 #endif // _WIN32
 
+#include "tier1/utlvector.h"
+
+struct AddonInfo_t
+{
+    CUtlString name;
+    CUtlString description;
+};
+
 bool LoadGameMounts();
+bool MountAddons();
+
+extern CUtlVector<AddonInfo_t> g_Addons;
 
 #endif // MOUNTLOGIC_H

@@ -70,6 +70,8 @@ $Project "Server (HL2MP)"
 				$File "$SRCDIR\game\shared\lua\lua_angle.h"
 				$File "lua\lua_baseplayer.cpp"
 				$File "lua\lua_baseplayer.h"
+				$File "lua\lua_baseentity.cpp"
+				$File "lua\lua_baseentity.h"
 			}
 
 			$File 	"altersrc\logic_playmovie.cpp"
