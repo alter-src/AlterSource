@@ -11,6 +11,7 @@
 #include "tier1/convar.h" // THePixelMoon: SHUT UP, INTELLISENSE!
 
 #include "lua_angle.h"
+#include "lua_color.h"
 #ifdef GAME_DLL
 #include "lua_baseplayer.h"
 #include "lua_baseentity.h"
@@ -44,8 +45,6 @@ static int lua_msgprint( lua_State* L )
         const char* s = lua_tostring( L, i );
         if ( s ) out += s;
         else out += "(null)";
-
-        lua_pop( L, 1 ); // pop string from lua_tostring
 
         if ( i < nargs ) out.push_back( '\t' );
     }
@@ -111,6 +110,7 @@ bool LuaHandle::Initialize()
 
 	Lua_RegisterVector( L );
 	Lua_RegisterQAngle( L );
+	Lua_RegisterColor( L );
 #ifdef GAME_DLL
 	LuaBaseEntity_Register( L );
 	LuaBasePlayer_Register( L );
@@ -209,6 +209,11 @@ bool LuaHandle::CallHookInternal( lua_State *L, const char *tableName, const cha
             {
                 CBasePlayer* player = va_arg(vargs, CBasePlayer*);
                 PushPlayer(L, player);
+            }
+            else if (type == 5) // CBaseEntity*
+            {
+                CBaseEntity* entity = va_arg(vargs, CBaseEntity*);
+                PushEntity(L, entity);
             }
 #endif
             else

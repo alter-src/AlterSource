@@ -8,12 +8,12 @@
 #include "cbase.h"
 #include "lua_angle.h"
 
-static LuaVector *CheckVector( lua_State *L, int idx )
+LuaVector *CheckVector( lua_State *L, int idx )
 {
     return (LuaVector *)luaL_checkudata( L, idx, "LuaVectorMeta" );
 }
 
-static LuaQAngle *CheckQAngle( lua_State *L, int idx )
+LuaQAngle *CheckQAngle( lua_State *L, int idx )
 {
     return (LuaQAngle *)luaL_checkudata( L, idx, "LuaQAngleMeta" );
 }
@@ -167,7 +167,6 @@ static const luaL_Reg LuaQAngleMeta[] = {
     { NULL, NULL }
 };
 
-// optional: global constructor
 static int LuaQAngle_New(lua_State *L)
 {
     float p = (float)luaL_checknumber(L, 1);

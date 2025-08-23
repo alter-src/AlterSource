@@ -11,6 +11,15 @@
 #include "tier1/convar.h"
 #include "lua_angle.h"
 
+CBasePlayer* CheckBasePlayer( lua_State* L, int idx )
+{
+    LuaPlayer* ply = ( LuaPlayer * )luaL_checkudata( L, idx, "LuaPlayerMeta" );
+    if ( !ply || !ply->player )
+        luaL_error(L, "Invalid player at stack index %d", idx);
+
+    return ply->player;
+}
+
 int PushPlayer( lua_State *L, CBasePlayer *player )
 {
 	if ( !player )

@@ -6,8 +6,16 @@
 
 #include "cbase.h"
 #include "lua_baseentity.h"
-#include "baseentity.h"
 #include "lua_angle.h"
+
+CBaseEntity* CheckBaseEntity( lua_State* L, int idx )
+{
+    LuaEntity* ent = ( LuaEntity * )luaL_checkudata( L, idx, "LuaEntityMeta" );
+    if ( !ent || !ent->ent )
+        luaL_error(L, "Invalid entity at stack index %d", idx);
+
+    return ent->ent;
+}
 
 int PushEntity( lua_State* L, CBaseEntity* entity )
 {

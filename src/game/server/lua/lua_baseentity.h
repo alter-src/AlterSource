@@ -11,12 +11,14 @@
 #endif // _WIN32
 
 #include "lua.hpp"
-
-void LuaBaseEntity_Register( lua_State *L );
-int PushEntity( lua_State* L, CBaseEntity* entity );
+#include "baseentity.h"
 
 struct LuaEntity {
     CBaseEntity* ent;
 };
+
+void LuaBaseEntity_Register( lua_State *L );
+int PushEntity( lua_State* L, CBaseEntity* entity );
+CBaseEntity* CheckBaseEntity( lua_State* L, int idx );
 
 #endif // LUA_BASEENTITY_H
