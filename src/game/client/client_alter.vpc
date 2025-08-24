@@ -71,6 +71,8 @@ $Project "Client (Alter)"
 			$File	"altersrc\srcfetch.cpp"
 			$File	"altersrc\addonsmenu.cpp"
 			$File	"altersrc\addonsmenu.h"
+			$File	"altersrc\discordmgr.cpp"
+			$File	"altersrc\discordmgr.h"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.cpp"
 			$File	"$SRCDIR\game\shared\altersrc\mountlogic.h"
 			$File	"$SRCDIR\game\shared\altersrc\weapon_physgun.cpp"
@@ -219,5 +221,6 @@ $Project "Client (Alter)"
     {
 		$Libexternal liblua5.1 [$LINUXALL]
 		$Libexternal lua5.1 [$WINDOWS]
+		$ImpLibexternal discord-rpc
     }
 }

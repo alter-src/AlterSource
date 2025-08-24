@@ -153,6 +153,7 @@
 #ifdef AS_DLL
 #include "mountlogic.h"
 #include "menu_background.h"
+#include "discordmgr.h"
 #endif // AS_DLL
 
 #ifdef HAS_LUA
@@ -1242,6 +1243,9 @@ void CHLClient::PostInit()
 #ifdef AS_DLL
 	LoadGameMounts();
 	MountAddons();
+
+	g_DiscordRPC.Init( AS_APPID );
+	g_DiscordRPC.Update( "In Main Menu", "" );
 	
 	SwapDisconnectCommand();
 #endif // AS_DLL
@@ -1362,6 +1366,9 @@ void CHLClient::Shutdown( void )
 	ClientSteamContext().Shutdown();
 #endif
 
+#ifdef AS_DLL
+	g_DiscordRPC.Shutdown();
+#endif // AS_DLL
 	
 	// This call disconnects the VGui libraries which we rely on later in the shutdown path, so don't do it
 //	DisconnectTier3Libraries( );
@@ -1798,6 +1805,12 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 		g_pGamepadUI->OnLevelInitializePreEntity();
 #endif // GAMEPADUI
 
+#ifdef AS_DLL
+	char mapPresence[ MAX_PATH ];
+	V_snprintf( mapPresence, sizeof( mapPresence ), "Map: %s", pMapName );
+	g_DiscordRPC.Update( "In Game", mapPresence );
+#endif // AS_DLL
+
 #ifdef HAS_LUA
 	// ThePixelMoon: autorun/ is basically shared
 	g_pLuaHandle->DoScript( SCRIPTTYPE_FOLDER, "scripts/lua/autorun" );
@@ -1909,6 +1922,10 @@ void CHLClient::LevelShutdown( void )
 	g_pParticleSystemMgr->UncacheAllParticleSystems();
 #endif
 	UncacheAllMaterials();
+
+#ifdef AS_DLL
+	g_DiscordRPC.Update( "In Main Menu", "" );
+#endif // AS_DLL
 
 #ifdef _XBOX
 	ReleaseRenderTargets();

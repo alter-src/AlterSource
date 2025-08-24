@@ -557,4 +557,11 @@ save/
 screenshots/
 addons/
 
+# fucker
+gamepadui.so
+gamepadui.dll
+
+!game/altersrc/bin
+!game/altersrc/bin/x64
+
 #-- end AS
